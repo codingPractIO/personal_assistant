@@ -1,0 +1,41 @@
+import json
+import re
+
+def parse_euro_number(s):
+    return float(s.replace('.', '').replace(',', '.'))
+
+# Load JSON from file
+with open("/home/soimimozo/Code/VSCode/reciept_bot/response_vero.json", encoding="utf-8") as f:
+    data = json.load(f)
+
+journal = data["journal"]
+lines = journal.splitlines()
+
+items = []
+buffer = []
+
+for line in lines:
+    line = line.strip()
+
+    # Match price/quantity/total lines
+    number_match = re.match(r"^([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)$", line)
+    
+    if number_match:
+        price_str, qty_str, total_str = number_match.groups()
+        name = " ".join(buffer).strip()
+        buffer.clear()  # reset for next item
+
+        if name:  # avoid empty names
+            items.append({
+                "name": name,
+                "price": parse_euro_number(price_str),
+                "quantity": parse_euro_number(qty_str),
+                "total": parse_euro_number(total_str)
+            })
+    else:
+        buffer.append(line)
+
+# Print results
+print("=== Clean Parsed Items ===")
+for item in items:
+    print(f"{item['name']}: {item['quantity']:.3f} × {item['price']:.2f} = {item['total']:.2f} RSD")

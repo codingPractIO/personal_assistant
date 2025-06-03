@@ -1,0 +1,35 @@
+{
+    "invoiceRequest": {
+        "posTime": null,
+        "taxId": "109963989",
+        "businessName": "MILIVOJE ALEMPIJEVIĆ PR TRGOVINSKA RADNJA MALINA FRUIT PLUS BEOGRAD",
+        "locationName": "1048620-MALINA FRUIT PLUS-VOCEPOVRCE",
+        "address": "ВОЈВОДЕ СТЕПЕ 228   ",
+        "city": "БЕОГРАД (ВОЖДОВАЦ)",
+        "administrativeUnit": "Београд-Вождовац",
+        "buyer": null,
+        "buyerCostCenter": null,
+        "cashier": null,
+        "requestedBy": "5MKEXHKJ",
+        "referentDocumentNumber": null,
+        "invoiceType": 0,
+        "transactionType": 0,
+        "payments": [
+            {
+                "paymentType": 2,
+                "amount": 482.185
+            }
+        ]
+    },
+    "invoiceResult": {
+        "totalAmount": 482.19,
+        "transactionTypeCounter": 73709,
+        "totalCounter": 73730,
+        "invoiceCounterExtension": "ПП",
+        "invoiceNumber": "5MKEXHKJ-5MKEXHKJ-73730",
+        "signedBy": "5MKEXHKJ",
+        "sdcTime": "2025-05-17T11:47:13.071Z"
+    },
+    "journal": "============ ФИСКАЛНИ РАЧУН ============\r\n               109963989                \r\n   MILIVOJE ALEMPIJEVIĆ PR TRGOVINSKA   \n    RADNJA MALINA FRUIT PLUS BEOGRAD    \r\n  1048620-MALINA FRUIT PLUS-VOCEPOVRCE  \r\n          ВОЈВОДЕ СТЕПЕ 228             \r\n            Београд-Вождовац            \r\nКасир:               MALINA FRUIT PLUSSS\r\nЕСИР број:                       311/1.0\r\n-------------ПРОМЕТ ПРОДАЈА-------------\r\nАртикли\r\n========================================\r\nНазив   Цена         Кол.         Укупно\r\nTikvice (kg) (Е)                        \r\n       199,00      0,760          151,24\r\n08-beli luk (kg) (Е)                    \r\n     1.500,00      0,110          165,00\r\nKORNISON KRASTAVC (kg) (Е)              \r\n       299,00      0,555          165,95\r\n----------------------------------------\r\nУкупан износ:                     482,19\r\nПлатна картица:                   482,19\r\n========================================\r\nОзнака       Име      Стопа        Порез\r\nЕ           П-ПДВ   10,00%         43,84\r\n----------------------------------------\r\nУкупан износ пореза:               43,84\r\n========================================\r\nПФР време:          17.05.2025. 13:47:13\r\nПФР број рачуна: 5MKEXHKJ-5MKEXHKJ-73730\r\nБројач рачуна:             73709/73730ПП\r\n========================================\r\n======== КРАЈ ФИСКАЛНОГ РАЧУНА =========",
+    "isValid": true
+}
