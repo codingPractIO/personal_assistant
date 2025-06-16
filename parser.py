@@ -18,7 +18,8 @@ class ReceiptParser:
         self.output_matrix = {}
 
         self._load_data()
-        self._parse_journal()
+        if self._is_tax_id_new():
+            self._parse_journal()
 
     def _load_data(self):
         with open(self.json_path, encoding="utf-8") as f:
@@ -33,6 +34,32 @@ class ReceiptParser:
             self.tax_id = invoice.get("taxId")
             self.location_name = invoice.get("locationName")
             self.total_amount = result.get("totalAmount")
+
+    def _append_tax_id_to_archive(self):
+        """
+        Appends the current tax_id to the 'processed_receipts' file in the archive folder.
+        Each tax_id is written on a new line.
+        """
+        archive_dir = os.path.join(os.path.dirname(__file__), "archive")
+        os.makedirs(archive_dir, exist_ok=True)
+        processed_file = os.path.join(archive_dir, "processed_receipts")
+        with open(processed_file, "a", encoding="utf-8") as f:
+            f.write(f"{self.tax_id}\n")
+
+    def _is_tax_id_new(self):
+        """
+        Checks if the current tax_id is already in the 'processed_receipts' file.
+        Returns True if it is NOT present (i.e., it's new), False otherwise.
+        """
+        archive_dir = os.path.join(os.path.dirname(__file__), "archive")
+        processed_file = os.path.join(archive_dir, "processed_receipts")
+        if not os.path.isfile(processed_file):
+            return True  # File doesn't exist, so tax_id is new
+
+        with open(processed_file, "r", encoding="utf-8") as f:
+            tax_ids = {line.strip() for line in f}
+        return str(self.tax_id) not in tax_ids
+            
 
     def _parse_euro_number(self, s):
         return float(s.replace('.', '').replace(',', '.'))
@@ -130,6 +157,7 @@ class ReceiptParser:
         output_path = os.path.join(output_dir, filename)
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(self.output_matrix, f, ensure_ascii=False, indent=4)
+        self._append_tax_id_to_archive()
 
 
 

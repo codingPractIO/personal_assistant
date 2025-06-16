@@ -23,8 +23,6 @@ logger = logging.getLogger(__name__)
 # Define states for ConversationHandler
 WAITING_FOR_IMAGE = 1
 
-def process_qr_code(qr_file_path):
-    
 
 # Handler for the /hello command
 async def hello_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
