@@ -18,7 +18,7 @@ service = build('sheets', 'v4', credentials=credentials)
 
 sheet = service.spreadsheets()
 
-def table_initialization():
+def initialize_tables():
     """
     Initializes the Google Sheet by clearing existing data and setting up headers.
     """
@@ -263,9 +263,23 @@ def prepare_sheets():
     print(f"New sheet created.")
     return response
 
-def append_cell_request(data):
 
+def append_item_data(data):
+    body = {
+        'values': data["items"]
+    }
 
+    result = sheet.values().append(
+        spreadsheetId=sheet_id,
+        range='item_table!A1',
+        valueInputOption='RAW',
+        insertDataOption='INSERT_ROWS',
+        body=body
+    ).execute()
+
+    print(f"{result.get('updates', {}).get('updatedCells', 0)} cells appended.")
+
+def append_voucher_data(data):
     body = {
         'values': data["voucher_data"]
     }

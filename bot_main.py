@@ -7,9 +7,11 @@ from telegram.ext import (
 from qr_reader import read_qr
 from parser import ReceiptParser
 from cleaner import remove_file, move_to_archive
-from exporter import append_cell_request
+from exporter import append_voucher_data, append_item_data
+
 import json
 from getter import get_json_data
+from dotenv import load_dotenv
 
 # Enable logging
 logging.basicConfig(
@@ -20,6 +22,9 @@ logger = logging.getLogger(__name__)
 
 # Define states for ConversationHandler
 WAITING_FOR_IMAGE = 1
+
+def process_qr_code(qr_file_path):
+    
 
 # Handler for the /hello command
 async def hello_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -54,16 +59,19 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Ensure the folder exists
     os.makedirs("qr_codes", exist_ok=True)
     # Create a unique filename
-    file_path = f"qr_codes/{update.effective_user.id}_{file.file_id}.jpg"
-    await file.download_to_drive(file_path)
+    qr_file_path = f"qr_codes/{update.effective_user.id}_{file.file_id}.jpg"
+    await file.download_to_drive(qr_file_path)
     await update.message.reply_text("QR code image received and saved. Thank you!")
     await update.message.reply_text("Processing the QR code...")
-    receipt_link = read_qr(file_path)
+    receipt_link = read_qr(qr_file_path)
     await update.message.reply_text("QR code processed successfully!")
-    remove_file(file_path)  # Remove the file after processing
+    remove_file(qr_file_path)  # Remove the file after processing
     if receipt_link:
         get_json_data(receipt_link)
-        parser = ReceiptParser(receipt_link)
+        print(receipt_link)
+        for file in os.listdir("raw_data"):
+            ReceiptParser(json_path=os.path.join("raw_data", file))
+            remove_file(os.path.join("raw_data", file))  # Remove the raw data file after parsing
     else:
         await update.message.reply_text("No QR code found in the image.")
         return WAITING_FOR_IMAGE
@@ -71,8 +79,9 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if file.endswith(".json"):
             parsed_file_path = os.path.join("parsed_data", file)
             with open(parsed_file_path, encoding="utf-8") as f:
-                parsed_file = json.load(f)
-            append_cell_request(parsed_file)
+                parsed_file_data = json.load(f)
+            append_item_data(parsed_file_data)
+            append_voucher_data(parsed_file_data)
             move_to_archive(parsed_file_path)
     
         
@@ -90,7 +99,7 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
-    BOT_TOKEN = ""
+    BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 

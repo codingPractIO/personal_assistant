@@ -198,3 +198,7 @@ cython_debug/
 
 #archive
 rnd/
+parsed_data/
+qr_codes/
+raw_data/
+archive/
