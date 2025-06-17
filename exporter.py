@@ -2,6 +2,8 @@ from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 from dotenv import load_dotenv
 import os
+from templates.table_creation_template import TABLE_CREATION_BODY
+from templates.sheets_preparation_template import SHEETS_PREPARATION_BODY
 
 load_dotenv()  # Loads from .env
 
@@ -24,136 +26,10 @@ def initialize_tables():
     """
     # Clear existing data
     sheet.values().clear(spreadsheetId=sheet_id, range='A1').execute()
-    
-
-    
-    body = {
-
-            
-        "requests": [
-           {
-
-                "addTable": {
-                    "table": {
-                        "name": "Item data",
-                        "tableId": "item_data",
-                        "range": {
-                            "sheetId": 1,
-                            "startColumnIndex": 0,
-                            "endColumnIndex": 8,
-                            "startRowIndex": 0,
-                            "endRowIndex": 5,
-                        },
-                    "columnProperties": [
-                        {
-                            "columnIndex": 0,
-                            "columnName": "Item",
-                            "columnType": "TEXT"
-                        },
-                        {
-                            "columnIndex": 1,
-                            "columnName": "Price",
-                            "columnType": "CURRENCY",
-                        },
-                          {
-                            "columnIndex": 2,
-                            "columnName": "Amount",
-                            "columnType": "CURRENCY",
-                        },
-                          {
-                            "columnIndex": 3,
-                            "columnName": "Total",
-                            "columnType": "CURRENCY",
-                        },
-                          {
-                            "columnIndex": 4,
-                            "columnName": "Reciept #",
-                            "columnType": "TEXT",
-                        },
-                          {
-                            "columnIndex": 5,
-                            "columnName": "Vendor",
-                            "columnType": "TEXT",
-                        },
-                          {
-                            "columnIndex": 6,
-                            "columnName": "Date",
-                            "columnType": "DATE",
-                        },
-                          {
-                            "columnIndex": 7,
-                            "columnName": "Time",
-                            "columnType": "TIME",
-                        }
-                    ],
-                    }
-                }
-            },
-            {
-
-                "addTable":     {
-                    "table": {
-                        "name": "Coupon data",
-                        "tableId": "coupon_data",
-                        "range": {
-                            "sheetId": 2,
-                            "startColumnIndex": 0,
-                            "endColumnIndex": 6,
-                            "startRowIndex": 0,
-                            "endRowIndex": 6,
-                        },
-                    "columnProperties": [
-                        {
-                            "columnIndex": 0,
-                            "columnName": "Reciept",
-                            "columnType": "TEXT"
-                        },
-                        {
-                            "columnIndex": 1,
-                            "columnName": "Place",
-                            "columnType": "TEXT",
-                           
-                        },
-                        {
-                            "columnIndex": 2,
-                            "columnName": "Voucher date",
-                            "columnType": "DATE",
-                        },
-                        {
-                            "columnIndex": 3,
-                            "columnName": "Voucher time",
-                            "columnType": "TIME",
-                        },
-                        {
-                            "columnIndex": 4,
-                            "columnName": "Total Amount Paid",
-                            "columnType": "CURRENCY",
-                           
-                        },
-                        {
-                            "columnIndex": 5,
-                            "columnName": "Voucher Value",
-                            "columnType": "CURRENCY",
-                           
-                        }
-                    ],
-                    }
-                }
-            }
-        ],
-        "includeSpreadsheetInResponse": False,
-        "responseRanges": [
-            "A1"
-        ],
-        "responseIncludeGridData": False
-    }
-
-            
-   
 
     service.spreadsheets().batchUpdate(
         spreadsheetId=sheet_id,
-        body=body
+        body=TABLE_CREATION_BODY
     ).execute()
     
     print("Sheet initialized with headers.")
@@ -223,42 +99,10 @@ def prepare_sheets():
     Creates a new sheet (tab) in the Google Spreadsheet.
     :param sheet_name: Name of the new sheet/tab.
     """
-    body = {
-        "requests": [
-             
-            {
-                "updateSheetProperties": {
-                    "properties": {
-                        "sheetId": 0,  # First/default sheet
-                        "title": "Graphs"
-                    },
-                    "fields": "title"
-                }
-            },
-            
-            {
-                "addSheet": {
-                    "properties": {
-                        "sheetId": 1,
-                        "title": "item_table"
-                    }
-                }
-            },
-
-            {
-                "addSheet": {
-                    "properties": {
-                        "sheetId": 2,
-                        "title": "voucher_table"
-                    }
-                }
-            }
-            
-        ]
-    }
+    
     response = service.spreadsheets().batchUpdate(
         spreadsheetId=sheet_id,
-        body=body
+        body=SHEETS_PREPARATION_BODY
     ).execute()
     print(f"New sheet created.")
     return response
