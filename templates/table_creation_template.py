@@ -40,7 +40,7 @@ TABLE_CREATION_BODY = {
                         },
                           {
                             "columnIndex": 4,
-                            "columnName": "Reciept #",
+                            "columnName": "Receipt #",
                             "columnType": "TEXT",
                         },
                           {
@@ -78,7 +78,7 @@ TABLE_CREATION_BODY = {
                     "columnProperties": [
                         {
                             "columnIndex": 0,
-                            "columnName": "Reciept",
+                            "columnName": "Receipt",
                             "columnType": "TEXT"
                         },
                         {
