@@ -113,6 +113,8 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
+    # Load environment variables from a .env file if present
+    load_dotenv()
     BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
