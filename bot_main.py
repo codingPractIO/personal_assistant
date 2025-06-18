@@ -4,14 +4,15 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, ConversationHandler, filters
 )
-from qr_reader import read_qr
-from parser import ReceiptParser
-from cleaner import remove_file, move_to_archive
-from exporter import append_voucher_data, append_item_data
+from assistant.qr_reader import read_qr
+from assistant.parser import ReceiptParser
+from assistant.cleaner import remove_file, move_to_archive
+from assistant.exporter import append_voucher_data, append_item_data
 
 import json
-from getter import get_json_data
+from assistant.getter import get_json_data
 from dotenv import load_dotenv
+from assistant.config import TELEGRAM_BOT_TOKEN
 
 # Load environment variables from a .env file if present
 load_dotenv()
@@ -82,7 +83,7 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if receipt_link:
         await update.message.reply_text("QR code processed successfully!")
         get_json_data(receipt_link)
-        print(receipt_link)
+        logger.info("Received receipt link: %s", receipt_link)
         for file in os.listdir("raw_data"):
             ReceiptParser(json_path=os.path.join("raw_data", file))
             remove_file(os.path.join("raw_data", file))  # Remove the raw data file after parsing
@@ -116,7 +117,7 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
-    BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    BOT_TOKEN = TELEGRAM_BOT_TOKEN
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -137,7 +138,7 @@ def main():
     app.add_handler(CommandHandler("hello", hello_command))
     app.add_handler(conv_handler)
 
-    print("Bot is running. Press Ctrl+C to stop.")
+    logger.info("Bot is running. Press Ctrl+C to stop.")
     app.run_polling()
 
 if __name__ == "__main__":

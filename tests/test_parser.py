@@ -3,7 +3,7 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from parser import ReceiptParser
+from assistant.parser import ReceiptParser
 
 
 def test_parse_euro_number(tmp_path, monkeypatch):

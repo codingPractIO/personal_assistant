@@ -1,7 +1,12 @@
-import requests
+"""Utility to fetch and store JSON data from URLs."""
+
 import json
+import logging
 import os
 from datetime import datetime
+import requests
+
+logger = logging.getLogger(__name__)
 
 # Headers for the request
 headers = {
@@ -28,7 +33,7 @@ def get_json_data(url):
         # Save to a file with proper encoding
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        print(f"Response saved to {file_path} with UTF-8 encoding. Code: {response.status_code}")
+        logger.info("Response saved to %s with UTF-8 encoding. Code: %s", file_path, response.status_code)
     else:
-        print(f"Request failed with status code {response.status_code}")
-        print(response.text)
+        logger.error("Request failed with status code %s", response.status_code)
+        logger.error(response.text)

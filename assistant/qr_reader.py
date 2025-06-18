@@ -1,9 +1,14 @@
+"""Utilities for reading QR codes from images."""
+
+import logging
 import cv2
 from pyzbar.pyzbar import decode
 
 
+logger = logging.getLogger(__name__)
 
-def read_qr(image_path):
+
+def read_qr(image_path: str) -> str | None:
     """
     Reads a QR code from the given image file and returns the decoded data.
 
@@ -18,9 +23,7 @@ def read_qr(image_path):
     # Decode QR codes in the image
     decoded_objects = decode(img)
     if decoded_objects:
-        # Return the data from the first QR code found
         qr_data = decoded_objects[0].data.decode('utf-8')
         return qr_data
-    else:
-        print("No QR code found in the image.")
-        return None
+    logger.warning("No QR code found in the image %s", image_path)
+    return None

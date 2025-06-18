@@ -1,5 +1,10 @@
+"""Helpers for moving and deleting files used by the bot."""
+
+import logging
 import os
 import shutil
+
+logger = logging.getLogger(__name__)
 
 def remove_file(file_path):
     """
@@ -8,6 +13,7 @@ def remove_file(file_path):
     """
     if os.path.isfile(file_path):
         os.remove(file_path)
+        logger.info("Removed file %s", file_path)
 
 def move_to_archive(file_path, archive_folder="archive"):
     """
@@ -21,3 +27,4 @@ def move_to_archive(file_path, archive_folder="archive"):
     os.makedirs(archive_folder, exist_ok=True)
     destination = os.path.join(archive_folder, os.path.basename(file_path))
     shutil.move(file_path, destination)
+    logger.info("Moved %s to %s", file_path, destination)
