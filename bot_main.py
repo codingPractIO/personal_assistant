@@ -23,6 +23,19 @@ logger = logging.getLogger(__name__)
 # Define states for ConversationHandler
 WAITING_FOR_IMAGE = 1
 
+main_keyboard = ReplyKeyboardMarkup(
+    [['/start', '/hello']],
+    resize_keyboard=True,
+    one_time_keyboard=False  # Persistent keyboard
+)
+
+
+qr_keyboard = ReplyKeyboardMarkup(
+    [['/cancel', '/scan_qr']],
+    resize_keyboard=True,
+    one_time_keyboard=False  # Persistent keyboard
+)
+
 
 # Handler for the /hello command
 async def hello_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -31,7 +44,7 @@ async def hello_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Handler for the /start command, which shows the menu
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = ReplyKeyboardMarkup(
-        [['/hello', '/add_receipt']],  # Added /add_receipt to menu
+        [['/hello', '/scan_qr']],  # Added /scan_qr to menu
         resize_keyboard=True,
         one_time_keyboard=True
     )
@@ -40,9 +53,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=keyboard
     )
 
-# Start the add_receipt conversation
-async def add_receipt_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Awaiting for QR code. Please send an image of the QR code, or /cancel to stop.")
+# Start the scan_qr conversation
+async def scan_qr_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Awaiting for QR code. Please send an image of the QR code, or /cancel to stop.",
+                                    reply_markup=qr_keyboard)
     return WAITING_FOR_IMAGE
 
 # Handle received images
@@ -59,12 +73,11 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Create a unique filename
     qr_file_path = f"qr_codes/{update.effective_user.id}_{file.file_id}.jpg"
     await file.download_to_drive(qr_file_path)
-    await update.message.reply_text("QR code image received and saved. Thank you!")
     await update.message.reply_text("Processing the QR code...")
     receipt_link = read_qr(qr_file_path)
-    await update.message.reply_text("QR code processed successfully!")
     remove_file(qr_file_path)  # Remove the file after processing
     if receipt_link:
+        await update.message.reply_text("QR code processed successfully!")
         get_json_data(receipt_link)
         print(receipt_link)
         for file in os.listdir("raw_data"):
@@ -88,12 +101,15 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Handle non-image messages while waiting for image
 async def non_qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Please send an image of the QR code, or /cancel to stop.")
+    await update.message.reply_text("Please send an image of the QR code, or /cancel to stop.",
+                                    reply_markup=qr_keyboard)
     return WAITING_FOR_IMAGE
+    
 
 # Handle /cancel command
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("QR code upload cancelled.")
+    await update.message.reply_text("QR code upload cancelled.",
+                                    reply_markup=main_keyboard)
     return ConversationHandler.END
 
 def main():
@@ -101,9 +117,9 @@ def main():
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Conversation handler for /add_receipt
+    # Conversation handler for /scan_qr
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("add_receipt", add_receipt_command)],
+        entry_points=[CommandHandler("scan_qr", scan_qr_command)],
         states={
             WAITING_FOR_IMAGE: [
                 MessageHandler(filters.PHOTO, qrcode_handler),
