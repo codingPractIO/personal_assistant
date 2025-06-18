@@ -13,6 +13,9 @@ import json
 from getter import get_json_data
 from dotenv import load_dotenv
 
+# Load environment variables from a .env file if present
+load_dotenv()
+
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -113,8 +116,6 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
-    # Load environment variables from a .env file if present
-    load_dotenv()
     BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
