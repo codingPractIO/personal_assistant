@@ -1,17 +1,16 @@
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
-from dotenv import load_dotenv
+"""Helpers for exporting parsed data to Google Sheets."""
+
 import os
+import logging
 from templates.table_creation_template import TABLE_CREATION_BODY
 from templates.sheets_preparation_template import SHEETS_PREPARATION_BODY
+from .config import GOOGLE_SHEET_KEY, SERVICE_ACCOUNT_FILE, SCOPES
 
-load_dotenv()  # Loads from .env
+logger = logging.getLogger(__name__)
 
-sheet_id = os.getenv("GOOGLE_SHEET_KEY")
-
-SCOPES = 'https://www.googleapis.com/auth/spreadsheets'
-
-SERVICE_ACCOUNT_FILE = 'google_service.json'
+sheet_id = GOOGLE_SHEET_KEY
 
 credentials = Credentials.from_service_account_file(
     SERVICE_ACCOUNT_FILE, scopes=[SCOPES]
@@ -32,7 +31,7 @@ def initialize_tables():
         body=TABLE_CREATION_BODY
     ).execute()
     
-    print("Sheet initialized with headers.")
+    logger.info("Sheet initialized with headers.")
 
 
 def reset_sheets():
@@ -91,7 +90,7 @@ def reset_sheets():
     # Now clear all data from 'Sheet1'
     sheet.values().clear(spreadsheetId=sheet_id, range='Sheet1').execute()
 
-    print("Spreadsheet reset: only one empty sheet with id 0 remains.")
+    logger.info("Spreadsheet reset: only one empty sheet with id 0 remains.")
 
 
 def prepare_sheets():
@@ -104,7 +103,7 @@ def prepare_sheets():
         spreadsheetId=sheet_id,
         body=SHEETS_PREPARATION_BODY
     ).execute()
-    print(f"New sheet created.")
+    logger.info("New sheet created.")
     return response
 
 
@@ -121,7 +120,7 @@ def append_item_data(data):
         body=body
     ).execute()
 
-    print(f"{result.get('updates', {}).get('updatedCells', 0)} cells appended.")
+    logger.info("%s cells appended.", result.get('updates', {}).get('updatedCells', 0))
 
 def append_voucher_data(data):
     body = {
@@ -136,6 +135,6 @@ def append_voucher_data(data):
         body=body
     ).execute()
 
-    print(f"{result.get('updates', {}).get('updatedCells', 0)} cells appended.")
+    logger.info("%s cells appended.", result.get('updates', {}).get('updatedCells', 0))
 
 

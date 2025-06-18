@@ -1,9 +1,15 @@
+"""Parse and extract receipt data from JSON files."""
+
 import json
-import re
+import logging
 import os
+import re
+
+logger = logging.getLogger(__name__)
 
 class ReceiptParser:
-    def __init__(self, json_path):
+    def __init__(self, json_path: str) -> None:
+        """Load a raw receipt JSON file for parsing."""
         self.json_path = json_path
         self.journal = ""
         self.lines = []
@@ -61,7 +67,8 @@ class ReceiptParser:
         return str(self.tax_id) not in tax_ids
             
 
-    def _parse_euro_number(self, s):
+    def _parse_euro_number(self, s: str) -> float:
+        """Convert a European formatted number string to a float."""
         return float(s.replace('.', '').replace(',', '.'))
 
     def _parse_journal(self):
@@ -118,7 +125,11 @@ class ReceiptParser:
         
 
     def _construct_output_matrix(self):
-        print(f"Constructing output matrix for tax_id: {self.tax_id}, pfr_date: {self.pfr_date}")
+        logger.info(
+            "Constructing output matrix for tax_id: %s, pfr_date: %s",
+            self.tax_id,
+            self.pfr_date,
+        )
         for item in self.items:
             item.append(self.tax_id)
             item.append(self.location_name)
@@ -142,7 +153,11 @@ class ReceiptParser:
         self._export_output_matrix_to_json()
     
     def _export_output_matrix_to_json(self):
-        print(f"Exporting data to JSON file for tax_id: {self.tax_id}, pfr_date: {self.pfr_date}")
+        logger.info(
+            "Exporting data to JSON file for tax_id: %s, pfr_date: %s",
+            self.tax_id,
+            self.pfr_date,
+        )
         """
         Exports the output_matrix dictionary to a JSON file in the 'output' subfolder.
         The filename is constructed from self.tax_id and self.pfr_date.
