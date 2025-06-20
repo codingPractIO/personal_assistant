@@ -5,6 +5,8 @@ import logging
 import os
 import re
 
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 logger = logging.getLogger(__name__)
 
 class ReceiptParser:
@@ -46,7 +48,7 @@ class ReceiptParser:
         Appends the current tax_id to the 'processed_receipts' file in the archive folder.
         Each tax_id is written on a new line.
         """
-        archive_dir = os.path.join(os.path.dirname(__file__), "archive")
+        archive_dir = os.path.join(ROOT_DIR, "archive")
         os.makedirs(archive_dir, exist_ok=True)
         processed_file = os.path.join(archive_dir, "processed_receipts")
         with open(processed_file, "a", encoding="utf-8") as f:
@@ -57,7 +59,7 @@ class ReceiptParser:
         Checks if the current tax_id is already in the 'processed_receipts' file.
         Returns True if it is NOT present (i.e., it's new), False otherwise.
         """
-        archive_dir = os.path.join(os.path.dirname(__file__), "archive")
+        archive_dir = os.path.join(ROOT_DIR, "archive")
         processed_file = os.path.join(archive_dir, "processed_receipts")
         if not os.path.isfile(processed_file):
             return True  # File doesn't exist, so tax_id is new
@@ -163,7 +165,7 @@ class ReceiptParser:
         The filename is constructed from self.tax_id and self.pfr_date.
         If the file exists, it will be overwritten.
         """
-        output_dir = os.path.join(os.path.dirname(__file__), "parsed_data")
+        output_dir = os.path.join(ROOT_DIR, "parsed_data")
         os.makedirs(output_dir, exist_ok=True)
         # Sanitize values for filename
         tax_id = str(self.tax_id) if self.tax_id else "unknown"
