@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 WAITING_FOR_IMAGE = 1
 
 main_keyboard = ReplyKeyboardMarkup(
-    [['/start', '/prepare_sheet']],
+    [['/start']],
     resize_keyboard=True,
     one_time_keyboard=False  # Persistent keyboard
 )
@@ -48,7 +48,7 @@ async def hello_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Handler for the /start command, which shows the menu
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = ReplyKeyboardMarkup(
-        [['/hello', '/scan_qr']],  # Added /scan_qr to menu
+        [['/scan_qr']],  # Added /scan_qr to menu
         resize_keyboard=True,
         one_time_keyboard=True
     )
@@ -148,6 +148,7 @@ def main():
 
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("hello", hello_command))
+    app.add_handler(CommandHandler("prepare_sheet", prepare_sheet_command))
     app.add_handler(conv_handler)
 
     logger.info("Bot is running. Press Ctrl+C to stop.")
