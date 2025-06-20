@@ -85,7 +85,9 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         get_json_data(receipt_link)
         logger.info("Received receipt link: %s", receipt_link)
         for file in os.listdir("raw_data"):
-            ReceiptParser(json_path=os.path.join("raw_data", file))
+            parser = ReceiptParser(json_path=os.path.join("raw_data", file))
+            if not parser.is_tax_id_new:
+                await update.message.reply_text("This receipt has already been processed.")
             remove_file(os.path.join("raw_data", file))  # Remove the raw data file after parsing
     else:
         await update.message.reply_text("No QR code found in the image.")

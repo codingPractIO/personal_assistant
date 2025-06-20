@@ -26,7 +26,8 @@ class ReceiptParser:
         self.output_matrix = {}
 
         self._load_data()
-        if self._is_tax_id_new():
+        self.is_tax_id_new = self._is_tax_id_new()
+        if self.is_tax_id_new:
             self._parse_journal()
 
     def _load_data(self):
