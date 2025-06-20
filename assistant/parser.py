@@ -26,7 +26,7 @@ class ReceiptParser:
         self.output_matrix = {}
 
         self._load_data()
-        self.is_tax_id_new = self._is_tax_id_new()
+        self.is_tax_id_new = self._check_if_tax_id_new()
         if self.is_tax_id_new:
             self._parse_journal()
 
@@ -55,7 +55,7 @@ class ReceiptParser:
         with open(processed_file, "a", encoding="utf-8") as f:
             f.write(f"{self.tax_id}\n")
 
-    def _is_tax_id_new(self):
+    def _check_if_tax_id_new(self):
         """
         Checks if the current tax_id is already in the 'processed_receipts' file.
         Returns True if it is NOT present (i.e., it's new), False otherwise.
