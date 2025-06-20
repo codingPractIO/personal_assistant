@@ -19,3 +19,17 @@ def test_parse_euro_number(tmp_path, monkeypatch):
     monkeypatch.setattr(ReceiptParser, '_is_tax_id_new', lambda self: False)
     parser = ReceiptParser(str(dummy))
     assert parser._parse_euro_number('1.234,56') == 1234.56
+
+
+def test_is_tax_id_new_property(tmp_path, monkeypatch):
+    data = {
+        "journal": "",
+        "invoiceRequest": {},
+        "invoiceResult": {}
+    }
+    dummy = tmp_path / "dummy.json"
+    dummy.write_text(json.dumps(data), encoding='utf-8')
+
+    monkeypatch.setattr(ReceiptParser, '_is_tax_id_new', lambda self: False)
+    parser = ReceiptParser(str(dummy))
+    assert parser.is_tax_id_new is False
