@@ -7,7 +7,7 @@ from telegram.ext import (
 from assistant.qr_reader import read_qr
 from assistant.parser import ReceiptParser
 from assistant.cleaner import remove_file, move_to_archive
-from assistant.exporter import append_voucher_data, append_item_data
+from assistant.exporter import append_voucher_data, append_item_data, reset_sheets, prepare_sheets, initialize_tables
 
 import json
 from assistant.getter import get_json_data
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 WAITING_FOR_IMAGE = 1
 
 main_keyboard = ReplyKeyboardMarkup(
-    [['/start', '/hello']],
+    [['/start', '/prepare_sheet']],
     resize_keyboard=True,
     one_time_keyboard=False  # Persistent keyboard
 )
@@ -115,6 +115,18 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("QR code upload cancelled.",
                                     reply_markup=main_keyboard)
     return ConversationHandler.END
+
+# Handler for the /prepare_sheets command
+async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Preparing sheets... Please wait.")
+    try:
+        reset_sheets()
+        prepare_sheets()
+        initialize_tables()
+        await update.message.reply_text("Sheets have been reset and initialized successfully!", reply_markup=main_keyboard)
+    except Exception as e:
+        logger.error(f"Error during sheet preparation: {e}")
+        await update.message.reply_text(f"An error occurred: {e}", reply_markup=main_keyboard)
 
 def main():
     BOT_TOKEN = TELEGRAM_BOT_TOKEN
