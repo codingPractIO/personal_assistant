@@ -44,7 +44,7 @@ class ReceiptParser:
             self.location_name = invoice.get("locationName")
             self.total_amount = result.get("totalAmount")
 
-    def _append_tax_id_to_archive(self):
+    def _archive_tax_id(self):
         """
         Appends the current tax_id to the 'processed_receipts' file in the archive folder.
         Each tax_id is written on a new line.
@@ -175,7 +175,7 @@ class ReceiptParser:
         output_path = os.path.join(output_dir, filename)
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(self.output_matrix, f, ensure_ascii=False, indent=4)
-        self._append_tax_id_to_archive()
+        self._archive_tax_id()
 
 
 
