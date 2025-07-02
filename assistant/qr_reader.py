@@ -23,21 +23,21 @@ def read_qr(image_path: str) -> str | None:
     if img is None:
         raise FileNotFoundError(f"Image not found: {image_path}")
 
-    # Preprocess image to improve readability
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    processed = cv2.adaptiveThreshold(
-        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
-    )
+    # # Preprocess image to improve readability
+    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # processed = cv2.adaptiveThreshold(
+    #     gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+    # )
 
     # Try decoding with pyzbar first
-    decoded_objects = decode(processed)
+    decoded_objects = decode(img)
     if decoded_objects:
         qr_data = decoded_objects[0].data.decode("utf-8")
         return qr_data
 
     # Fallback to OpenCV's QRCodeDetector
     detector = cv2.QRCodeDetector()
-    data, _, _ = detector.detectAndDecode(processed)
+    data, _, _ = detector.detectAndDecode(img)
     if data:
         return data
 

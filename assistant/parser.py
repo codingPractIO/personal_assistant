@@ -22,6 +22,7 @@ class ReceiptParser:
         self.tax_id = None
         self.location_name = None
         self.total_amount = None
+        self.invoice_number = None
         self.voucher_data = []
         self.output_matrix = {}
 
@@ -43,6 +44,7 @@ class ReceiptParser:
             self.tax_id = invoice.get("taxId")
             self.location_name = invoice.get("locationName")
             self.total_amount = result.get("totalAmount")
+            self.invoice_number = result.get("invoiceNumber")
 
     def _archive_tax_id(self):
         """
@@ -53,7 +55,7 @@ class ReceiptParser:
         os.makedirs(archive_dir, exist_ok=True)
         processed_file = os.path.join(archive_dir, "processed_receipts")
         with open(processed_file, "a", encoding="utf-8") as f:
-            f.write(f"{self.tax_id}\n")
+            f.write(f"{self.invoice_number}\n")
 
     def _check_if_tax_id_new(self):
         """
@@ -66,8 +68,8 @@ class ReceiptParser:
             return True  # File doesn't exist, so tax_id is new
 
         with open(processed_file, "r", encoding="utf-8") as f:
-            tax_ids = {line.strip() for line in f}
-        return str(self.tax_id) not in tax_ids
+            invoice_numbers = {line.strip() for line in f}
+        return str(self.invoice_number) not in invoice_numbers
             
 
     def _parse_euro_number(self, s: str) -> float:
