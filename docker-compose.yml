@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  bot:
+    build: .
+    env_file:
+      - .env              # uses your .env file from host
+    volumes:
+      - ./google_service.json:/app/google_service.json   # mount config.json
+      - ./archive:/app/archive           # persist archive data
+    restart: unless-stopped              # optional: auto-restart
