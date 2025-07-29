@@ -1,8 +1,6 @@
+"""Helpers for exporting parsed data to Google Sheets."""
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
-"""Helpers for exporting parsed data to Google Sheets."""
-
-import os
 import logging
 from templates.table_creation_template import TABLE_CREATION_BODY
 from templates.sheets_preparation_template import SHEETS_PREPARATION_BODY
@@ -12,17 +10,25 @@ logger = logging.getLogger(__name__)
 
 sheet_id = GOOGLE_SHEET_KEY
 
-credentials = Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE, scopes=[SCOPES]
-)
-service = build('sheets', 'v4', credentials=credentials)
+_service = None
 
-sheet = service.spreadsheets()
+
+def get_service():
+    """Return an authorized Google Sheets service instance."""
+    global _service
+    if _service is None:
+        credentials = Credentials.from_service_account_file(
+            SERVICE_ACCOUNT_FILE, scopes=[SCOPES]
+        )
+        _service = build("sheets", "v4", credentials=credentials)
+    return _service
 
 def initialize_tables():
     """
     Initializes the Google Sheet by clearing existing data and setting up headers.
     """
+    service = get_service()
+    sheet = service.spreadsheets()
     # Clear existing data
     sheet.values().clear(spreadsheetId=sheet_id, range='A1').execute()
 
@@ -40,6 +46,8 @@ def reset_sheets():
     - Ensures only one sheet remains with sheetId 0.
     - Clears all data from the remaining sheet and renames it to 'Sheet1'.
     """
+    service = get_service()
+    sheet = service.spreadsheets()
     spreadsheet = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
     sheets = spreadsheet.get('sheets', [])
     sheet_ids = [s['properties']['sheetId'] for s in sheets]
@@ -99,6 +107,7 @@ def prepare_sheets():
     :param sheet_name: Name of the new sheet/tab.
     """
     
+    service = get_service()
     response = service.spreadsheets().batchUpdate(
         spreadsheetId=sheet_id,
         body=SHEETS_PREPARATION_BODY
@@ -112,6 +121,8 @@ def append_item_data(data):
         'values': data["items"]
     }
 
+    service = get_service()
+    sheet = service.spreadsheets()
     result = sheet.values().append(
         spreadsheetId=sheet_id,
         range='item_table!A1',
@@ -127,6 +138,8 @@ def append_voucher_data(data):
         'values': data["voucher_data"]
     }
 
+    service = get_service()
+    sheet = service.spreadsheets()
     result = sheet.values().append(
         spreadsheetId=sheet_id,
         range='voucher_table!A1',
