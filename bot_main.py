@@ -8,6 +8,7 @@ from assistant.qr_reader import read_qr
 from assistant.parser import ReceiptParser
 from assistant.cleaner import remove_file, move_to_archive
 from assistant.exporter import append_voucher_data, append_item_data, reset_sheets, prepare_sheets, initialize_tables
+from assistant.db_handler import table_init, add_user
 
 import json
 from assistant.getter import get_json_data
@@ -52,6 +53,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         resize_keyboard=True,
         one_time_keyboard=True
     )
+    add_user(update.effective_user.id)
     await update.message.reply_text(
         "Welcome! Press a button below or type a command.",
         reply_markup=keyboard
@@ -132,6 +134,7 @@ async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TY
 
 def main():
     BOT_TOKEN = TELEGRAM_BOT_TOKEN
+    table_init()
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
