@@ -31,3 +31,15 @@ def table_init():
 
     conn.commit()
     conn.close()
+
+
+def add_user(user_id: int):
+    """Insert a new user into the users table if it does not already exist."""
+    conn = db_connect()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR IGNORE INTO users (user_id) VALUES (?)",
+        (user_id,)
+    )
+    conn.commit()
+    conn.close()
