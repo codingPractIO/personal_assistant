@@ -16,13 +16,16 @@ def table_init():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER UNIQUE,
-            googlesheet_key TEXT
+            googlesheet_key TEXT,
+            is_owner INTEGER DEFAULT 0,
+            registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS qr_codes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             qr_code TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (user_id)

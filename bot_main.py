@@ -83,7 +83,7 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     receipt_link = read_qr(qr_file_path)
     remove_file(qr_file_path)  # Remove the file after processing
     if receipt_link:
-        await update.message.reply_text("QR code found in the image.")
+        await update.message.reply_text("QR code found! Processing receipt...")
         get_json_data(receipt_link)
         logger.info("Received receipt link: %s", receipt_link)
         for file in os.listdir("raw_data"):
