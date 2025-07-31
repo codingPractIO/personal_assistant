@@ -1,5 +1,18 @@
 import os
 import sqlite3
+from dataclasses import dataclass
+from typing import Optional
+
+
+@dataclass
+class User:
+    """Simple representation of a bot user."""
+
+    id: int
+    user_id: int
+    googlesheet_key: Optional[str]
+    is_owner: int
+    registered_at: str
 
 
 def db_connect():
@@ -36,13 +49,29 @@ def table_init():
     conn.close()
 
 
-def add_user(user_id: int):
+def get_user(user_id: int) -> Optional[User]:
+    """Retrieve a user from the database."""
+    conn = db_connect()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, user_id, googlesheet_key, is_owner, registered_at "
+        "FROM users WHERE user_id = ?",
+        (user_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return User(*row)
+    return None
+
+
+def add_user(user_id: int) -> None:
     """Insert a new user into the users table if it does not already exist."""
     conn = db_connect()
     cursor = conn.cursor()
     cursor.execute(
         "INSERT OR IGNORE INTO users (user_id) VALUES (?)",
-        (user_id,)
+        (user_id,),
     )
     conn.commit()
     conn.close()
