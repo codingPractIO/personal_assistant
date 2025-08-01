@@ -4,6 +4,7 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, ConversationHandler, filters
 )
+
 from assistant.qr_reader import read_qr
 from assistant.parser import ReceiptParser
 from assistant.cleaner import remove_file, move_to_archive
@@ -77,35 +78,26 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Get the highest resolution photo
     file = await context.bot.get_file(photo[-1].file_id)
-    # Ensure the folder exists
-    os.makedirs("qr_codes", exist_ok=True)
-    # Create a unique filename
-    qr_file_path = f"qr_codes/{update.effective_user.id}_{file.file_id}.jpg"
-    await file.download_to_drive(qr_file_path)
+    raw_byte_array = await file.download_as_bytearray()
     await update.message.reply_text("Processing the QR code...")
-    receipt_link = read_qr(qr_file_path)
-    remove_file(qr_file_path)  # Remove the file after processing
+    receipt_link = read_qr(raw_byte_array)
     if receipt_link:
         await update.message.reply_text("QR code found! Processing receipt...")
-        get_json_data(receipt_link)
         logger.info("Received receipt link: %s", receipt_link)
-        for file in os.listdir("raw_data"):
-            parser = ReceiptParser(json_path=os.path.join("raw_data", file))
-            if not parser.is_tax_id_new:
-                await update.message.reply_text("This receipt has already been processed before.")
-            remove_file(os.path.join("raw_data", file))  # Remove the raw data file after parsing
+        raw_data = get_json_data(receipt_link)
+        parser = ReceiptParser(json_file=raw_data)
+        if not parser.is_tax_id_new:
+            await update.message.reply_text("This receipt has already been processed before.")
+            return ConversationHandler.END
+        else:
+            parsed_json = parser.to_dict()
     else:
-        await update.message.reply_text("No QR code found in the image.")
+        await update.message.reply_text("No QR code found in the image, please try to send a clearer image.")
         return WAITING_FOR_IMAGE
-    for file in os.listdir("parsed_data"):
-        if file.endswith(".json"):
-            parsed_file_path = os.path.join("parsed_data", file)
-            with open(parsed_file_path, encoding="utf-8") as f:
-                parsed_file_data = json.load(f)
-            append_item_data(parsed_file_data)
-            append_voucher_data(parsed_file_data)
-            move_to_archive(parsed_file_path)
-    
+    if parsed_json:
+        append_item_data(parsed_json)
+        append_voucher_data(parsed_json)
+
         
         
     return ConversationHandler.END

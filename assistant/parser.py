@@ -4,15 +4,16 @@ import json
 import logging
 import os
 import re
+from typing import Any
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 logger = logging.getLogger(__name__)
 
 class ReceiptParser:
-    def __init__(self, json_path: str) -> None:
+    def __init__(self, json_file: dict[str, Any]) -> None:
         """Load a raw receipt JSON file for parsing."""
-        self.json_path = json_path
+        self.json_file = json_file
         self.journal = ""
         self.lines = []
         self.items = []
@@ -30,21 +31,20 @@ class ReceiptParser:
         self.is_tax_id_new = self._check_if_tax_id_new()
         if self.is_tax_id_new:
             self._parse_journal()
+            self._archive_tax_id()
 
     def _load_data(self):
-        with open(self.json_path, encoding="utf-8") as f:
-            data = json.load(f)
 
-            self.journal = data.get("journal", "")
-            self.lines = self.journal.splitlines()
+        self.journal = self.json_file.get("journal", "")
+        self.lines = self.journal.splitlines()
 
-            invoice = data.get("invoiceRequest", {})
-            result = data.get("invoiceResult", {})
+        invoice = self.json_file.get("invoiceRequest", {})
+        result = self.json_file.get("invoiceResult", {})
 
-            self.tax_id = invoice.get("taxId")
-            self.location_name = invoice.get("locationName")
-            self.total_amount = result.get("totalAmount")
-            self.invoice_number = result.get("invoiceNumber")
+        self.tax_id = invoice.get("taxId")
+        self.location_name = invoice.get("locationName")
+        self.total_amount = result.get("totalAmount")
+        self.invoice_number = result.get("invoiceNumber")
 
     def _archive_tax_id(self):
         """
@@ -155,42 +155,6 @@ class ReceiptParser:
             "voucher_data": self.voucher_data
         }
 
-        self._export_output_matrix_to_json()
-    
-    def _export_output_matrix_to_json(self):
-        logger.info(
-            "Exporting data to JSON file for tax_id: %s, pfr_date: %s",
-            self.tax_id,
-            self.pfr_date,
-        )
-        """
-        Exports the output_matrix dictionary to a JSON file in the 'output' subfolder.
-        The filename is constructed from self.tax_id and self.pfr_date.
-        If the file exists, it will be overwritten.
-        """
-        output_dir = os.path.join(ROOT_DIR, "parsed_data")
-        os.makedirs(output_dir, exist_ok=True)
-        # Sanitize values for filename
-        tax_id = str(self.tax_id) if self.tax_id else "unknown"
-        pfr_date = str(self.pfr_date).replace('.', '-') if self.pfr_date else "unknown"
-        filename = f"{tax_id}_{pfr_date}.json"
-        output_path = os.path.join(output_dir, filename)
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(self.output_matrix, f, ensure_ascii=False, indent=4)
-        self._archive_tax_id()
-
-
-
-    def get_summary(self):
-        return (
-            self.tax_id,
-            self.location_name,
-            self.pfr_date,
-            self.pfr_time,
-            self.total_amount,
-            self.voucher_value
-        )
-
-    def get_items(self):
-        return self.items
-
+    def to_dict(self) -> dict[str, Any] | None:
+            """Return the processed output_matrix as a dict."""
+            return self.output_matrix

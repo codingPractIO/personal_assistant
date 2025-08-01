@@ -2,6 +2,8 @@
 
 import logging
 
+import numpy as np
+
 import cv2
 from pyzbar.pyzbar import decode
 
@@ -9,19 +11,19 @@ from pyzbar.pyzbar import decode
 logger = logging.getLogger(__name__)
 
 
-def read_qr(image_path: str) -> str | None:
+def read_qr(raw_byte_array: bytearray) -> str | None:
     """
     Reads a QR code from the given image file and returns the decoded data.
     The image is preprocessed to enhance readability. If ``pyzbar`` fails to
     decode the QR code, the function falls back to OpenCV's ``QRCodeDetector``.
 
-    :param image_path: Path to the image file containing the QR code.
     :return: Decoded data as a string, or None if no QR code is found.
     """
-    # Load the image
-    img = cv2.imread(image_path)
+    # Convert byte array to numpy array and decode into OpenCV image
+    np_arr = np.frombuffer(raw_byte_array, dtype=np.uint8)
+    img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR) 
     if img is None:
-        raise FileNotFoundError(f"Image not found: {image_path}")
+        raise FileNotFoundError(f"Bytearray not found.")
 
     # # Preprocess image to improve readability
     # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -41,5 +43,5 @@ def read_qr(image_path: str) -> str | None:
     if data:
         return data
 
-    logger.warning("No QR code found in the image %s", image_path)
+    logger.warning("No QR code found in the bytearray")
     return None
