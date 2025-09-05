@@ -1,18 +1,6 @@
 import os
 import sqlite3
-from dataclasses import dataclass
-from typing import Optional
-
-
-@dataclass
-class User:
-    """Simple representation of a bot user."""
-
-    id: int
-    user_id: int
-    googlesheet_key: Optional[str]
-    is_owner: int
-    registered_at: str
+from assistant.class_user import User
 
 
 def db_connect():
@@ -28,7 +16,7 @@ def table_init():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER UNIQUE,
+            user_telegram_id INTEGER UNIQUE,
             googlesheet_key TEXT,
             is_owner INTEGER DEFAULT 0,
             registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -38,7 +26,7 @@ def table_init():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS qr_codes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
+            user_telegram_id INTEGER,
             qr_code TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (user_id)
@@ -49,14 +37,14 @@ def table_init():
     conn.close()
 
 
-def get_user(user_id: int) -> Optional[User]:
+def get_user(user_telegram_id: int) -> Optional[User]:
     """Retrieve a user from the database."""
     conn = db_connect()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, user_id, googlesheet_key, is_owner, registered_at "
+        "SELECT id, user_telegram_id, googlesheet_key, is_owner, registered_at "
         "FROM users WHERE user_id = ?",
-        (user_id,),
+        (user_telegram_id,),
     )
     row = cursor.fetchone()
     conn.close()
@@ -65,13 +53,38 @@ def get_user(user_id: int) -> Optional[User]:
     return None
 
 
-def add_user(user_id: int) -> None:
+def add_user(user_telegram_id: int) -> None:
     """Insert a new user into the users table if it does not already exist."""
     conn = db_connect()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT OR IGNORE INTO users (user_id) VALUES (?)",
-        (user_id,),
+        "INSERT OR IGNORE INTO users (user_telegram_id) VALUES (?)",
+        (user_telegram_id,),
     )
     conn.commit()
     conn.close()
+
+def add_googlesheet_key(user_telegram_id: int, googlesheet_key: str) -> None:
+    """Update the googlesheet_key for a user in the users table."""
+    conn = db_connect()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET googlesheet_key = ? WHERE user_telegram_id = ?",
+        (googlesheet_key, user_telegram_id),
+    )
+    conn.commit()
+    conn.close()
+
+def get_googlesheet_key(user_telegram_id: int) -> str | None:
+    """Retrieve the googlesheet_key for a user from the users table."""
+    conn = db_connect()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT googlesheet_key FROM users WHERE user_telegram_id = ?",
+        (user_telegram_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return row[0]
+    return None

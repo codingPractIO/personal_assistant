@@ -25,12 +25,6 @@ def read_qr(raw_byte_array: bytearray) -> str | None:
     if img is None:
         raise FileNotFoundError(f"Bytearray not found.")
 
-    # # Preprocess image to improve readability
-    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # processed = cv2.adaptiveThreshold(
-    #     gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
-    # )
-
     # Try decoding with pyzbar first
     decoded_objects = decode(img)
     if decoded_objects:
@@ -42,6 +36,23 @@ def read_qr(raw_byte_array: bytearray) -> str | None:
     data, _, _ = detector.detectAndDecode(img)
     if data:
         return data
+    
+    # Preprocess image to improve readability if original failed
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    processed = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+    )
+
+    decoded_objects = decode(processed)
+    if decoded_objects:
+        qr_data = decoded_objects[0].data.decode("utf-8")
+        return qr_data
+    
+    detector = cv2.QRCodeDetector()
+    data, _, _ = detector.detectAndDecode(processed)
+    if data:
+        return data
+
 
     logger.warning("No QR code found in the bytearray")
     return None
