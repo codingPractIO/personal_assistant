@@ -1,5 +1,7 @@
 import os
 import sqlite3
+from typing import Optional
+
 from assistant.class_user import User
 
 
@@ -29,7 +31,7 @@ def table_init():
             user_telegram_id INTEGER,
             qr_code TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (user_id)
+            FOREIGN KEY (user_telegram_id) REFERENCES users (user_telegram_id)
         )
     ''')
 
@@ -43,7 +45,7 @@ def get_user(user_telegram_id: int) -> Optional[User]:
     cursor = conn.cursor()
     cursor.execute(
         "SELECT id, user_telegram_id, googlesheet_key, is_owner, registered_at "
-        "FROM users WHERE user_id = ?",
+        "FROM users WHERE user_telegram_id = ?",
         (user_telegram_id,),
     )
     row = cursor.fetchone()
@@ -63,6 +65,12 @@ def add_user(user_telegram_id: int) -> None:
     )
     conn.commit()
     conn.close()
+
+
+def construct_user(user_telegram_id: int) -> Optional[User]:
+    """Ensure a user exists in the database and return it."""
+    add_user(user_telegram_id)
+    return get_user(user_telegram_id)
 
 def add_googlesheet_key(user_telegram_id: int, googlesheet_key: str) -> None:
     """Update the googlesheet_key for a user in the users table."""
