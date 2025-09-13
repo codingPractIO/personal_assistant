@@ -9,7 +9,7 @@ from assistant.qr_reader import read_qr
 from assistant.parser import ReceiptParser
 from assistant.cleaner import remove_file, move_to_archive
 from assistant.exporter import append_voucher_data, append_item_data, reset_sheets, prepare_sheets, initialize_tables
-from assistant.db_handler import table_init, construct_user, User
+from assistant.db_handler import table_init, construct_user, get_user, User
 
 import json
 from assistant.getter import get_json_data
@@ -126,6 +126,26 @@ async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TY
         logger.error(f"Error during sheet preparation: {e}")
         await update.message.reply_text(f"An error occurred: {e}", reply_markup=main_keyboard)
 
+# Handler for the /sheet_key command
+async def sheet_key_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send the user's Google Sheet key back to them."""
+    user = context.user_data.get("user")
+
+    if not user:
+        # Fallback to the database in case user data wasn't populated via /start
+        user = get_user(update.effective_user.id)
+        if user:
+            context.user_data["user"] = user
+
+    if not user:
+        await update.message.reply_text("Please run /start first to initialize your account.")
+        return
+
+    if user.googlesheet_key:
+        await update.message.reply_text(f"Your Google Sheet key: {user.googlesheet_key}")
+    else:
+        await update.message.reply_text("No Google Sheet key found for your account.")
+
 def main():
     BOT_TOKEN = TELEGRAM_BOT_TOKEN
     table_init()
@@ -148,6 +168,7 @@ def main():
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("hello", hello_command))
     app.add_handler(CommandHandler("prepare_sheet", prepare_sheet_command))
+    app.add_handler(CommandHandler("sheet_key", sheet_key_command))
     app.add_handler(conv_handler)
 
     logger.info("Bot is running. Press Ctrl+C to stop.")
