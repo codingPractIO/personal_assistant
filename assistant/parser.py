@@ -11,9 +11,13 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 logger = logging.getLogger(__name__)
 
 class ReceiptParser:
-    def __init__(self, json_file: dict[str, Any]) -> None:
+    def __init__(self, json_file: str | dict[str, Any]) -> None:
         """Load a raw receipt JSON file for parsing."""
-        self.json_file = json_file
+        if isinstance(json_file, str):
+            with open(json_file, "r", encoding="utf-8") as f:
+                self.json_file = json.load(f)
+        else:
+            self.json_file = json_file
         self.journal = ""
         self.lines = []
         self.items = []
@@ -156,5 +160,5 @@ class ReceiptParser:
         }
 
     def to_dict(self) -> dict[str, Any] | None:
-            """Return the processed output_matrix as a dict."""
-            return self.output_matrix
+        """Return the processed output_matrix as a dict."""
+        return self.output_matrix
