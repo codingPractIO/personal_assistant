@@ -126,6 +126,19 @@ async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TY
         logger.error(f"Error during sheet preparation: {e}")
         await update.message.reply_text(f"An error occurred: {e}", reply_markup=main_keyboard)
 
+# Handler for the /sheet_key command
+async def sheet_key_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send the user's Google Sheet key back to them."""
+    user = context.user_data.get("user")
+    if not user:
+        await update.message.reply_text("Please run /start first to initialize your account.")
+        return
+
+    if user.googlesheet_key:
+        await update.message.reply_text(f"Your Google Sheet key: {user.googlesheet_key}")
+    else:
+        await update.message.reply_text("No Google Sheet key found for your account.")
+
 def main():
     BOT_TOKEN = TELEGRAM_BOT_TOKEN
     table_init()
@@ -148,6 +161,7 @@ def main():
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("hello", hello_command))
     app.add_handler(CommandHandler("prepare_sheet", prepare_sheet_command))
+    app.add_handler(CommandHandler("sheet_key", sheet_key_command))
     app.add_handler(conv_handler)
 
     logger.info("Bot is running. Press Ctrl+C to stop.")
