@@ -96,3 +96,28 @@ def get_googlesheet_key(user_telegram_id: int) -> str | None:
     if row:
         return row[0]
     return None
+
+
+def add_processed_receipt(user_telegram_id: int, receipt_number: str) -> None:
+    """Store a processed receipt number for the given user."""
+    conn = db_connect()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO processed_receipts (user_telegram_id, receipt_number) VALUES (?, ?)",
+        (user_telegram_id, receipt_number),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_processed_receipts(user_telegram_id: int) -> set[str]:
+    """Retrieve all processed receipt numbers for a given user."""
+    conn = db_connect()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT receipt_number FROM processed_receipts WHERE user_telegram_id = ?",
+        (user_telegram_id,),
+    )
+    receipts = {row[0] for row in cursor.fetchall()}
+    conn.close()
+    return receipts

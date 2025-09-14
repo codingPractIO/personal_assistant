@@ -83,7 +83,11 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("QR code found! Processing receipt...")
         logger.info("Received receipt link: %s", receipt_link)
         raw_data = get_json_data(receipt_link)
-        parser = ReceiptParser(json_file=raw_data)
+        user = context.user_data.get("user")
+        if not user:
+            await update.message.reply_text("Please run /start first to initialize your account.")
+            return ConversationHandler.END
+        parser = ReceiptParser(json_file=raw_data, user_telegram_id=user.user_id)
         if not parser.is_tax_id_new:
             await update.message.reply_text("This receipt has already been processed before.")
             return ConversationHandler.END
@@ -93,10 +97,9 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("No QR code found in the image, please try to send a clearer image.")
         return WAITING_FOR_IMAGE
     if parsed_json:
-        user = context.user_data.get("user")
         if not user or not user.googlesheet_key:
             await update.message.reply_text(
-                "No Google Sheet key found. Please set one using /add_google_sheet_key."
+                "No Google Sheet key found. Please set one using /add_google_sheet_key.",
             )
             return ConversationHandler.END
         append_item_data(user.googlesheet_key, parsed_json)

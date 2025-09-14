@@ -2,22 +2,22 @@
 
 import json
 import logging
-import os
 import re
 from typing import Any
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from assistant.db_handler import add_processed_receipt, get_processed_receipts
 
 logger = logging.getLogger(__name__)
 
 class ReceiptParser:
-    def __init__(self, json_file: str | dict[str, Any]) -> None:
+    def __init__(self, json_file: str | dict[str, Any], user_telegram_id: int | None = None) -> None:
         """Load a raw receipt JSON file for parsing."""
         if isinstance(json_file, str):
             with open(json_file, "r", encoding="utf-8") as f:
                 self.json_file = json.load(f)
         else:
             self.json_file = json_file
+        self.user_telegram_id = user_telegram_id
         self.journal = ""
         self.lines = []
         self.items = []
@@ -50,30 +50,18 @@ class ReceiptParser:
         self.total_amount = result.get("totalAmount")
         self.invoice_number = result.get("invoiceNumber")
 
-    def _archive_tax_id(self):
-        """
-        Appends the current tax_id to the 'processed_receipts' file in the archive folder.
-        Each tax_id is written on a new line.
-        """
-        archive_dir = os.path.join(ROOT_DIR, "archive")
-        os.makedirs(archive_dir, exist_ok=True)
-        processed_file = os.path.join(archive_dir, "processed_receipts")
-        with open(processed_file, "a", encoding="utf-8") as f:
-            f.write(f"{self.invoice_number}\n")
+    def _archive_tax_id(self) -> None:
+        """Store the current invoice number as processed for the user."""
+        if self.user_telegram_id is None or self.invoice_number is None:
+            return
+        add_processed_receipt(self.user_telegram_id, str(self.invoice_number))
 
-    def _check_if_tax_id_new(self):
-        """
-        Checks if the current tax_id is already in the 'processed_receipts' file.
-        Returns True if it is NOT present (i.e., it's new), False otherwise.
-        """
-        archive_dir = os.path.join(ROOT_DIR, "archive")
-        processed_file = os.path.join(archive_dir, "processed_receipts")
-        if not os.path.isfile(processed_file):
-            return True  # File doesn't exist, so tax_id is new
-
-        with open(processed_file, "r", encoding="utf-8") as f:
-            invoice_numbers = {line.strip() for line in f}
-        return str(self.invoice_number) not in invoice_numbers
+    def _check_if_tax_id_new(self) -> bool:
+        """Check if the current invoice number has already been processed."""
+        if self.user_telegram_id is None or self.invoice_number is None:
+            return True
+        processed = get_processed_receipts(self.user_telegram_id)
+        return str(self.invoice_number) not in processed
             
 
     def _parse_euro_number(self, s: str) -> float:
