@@ -14,7 +14,12 @@ sys.modules.setdefault("pyzbar.pyzbar", types.SimpleNamespace(decode=lambda *arg
 sys.modules.setdefault("assistant.qr_reader", types.SimpleNamespace(read_qr=lambda *args, **kwargs: None))
 
 from assistant import db_handler
-from bot_main import sheet_key_command
+from bot_main import (
+    sheet_key_command,
+    add_google_sheet_key_command,
+    receive_google_sheet_key,
+    WAITING_FOR_SHEET_KEY,
+)
 
 
 class DummyMessage:
@@ -60,5 +65,40 @@ def test_sheet_key_command_requires_start(tmp_path, monkeypatch):
     context = DummyContext()
 
     asyncio.run(sheet_key_command(update, context))
+
+    assert update.message.text == "Please run /start first to initialize your account."
+
+
+def test_add_google_sheet_key_flow_updates_key(tmp_path, monkeypatch):
+    monkeypatch.setattr(db_handler, "db_connect", lambda: sqlite3.connect(tmp_path / "test.db"))
+    db_handler.table_init()
+    db_handler.add_user(1)
+
+    update = DummyUpdate(1)
+    context = DummyContext()
+    context.user_data["user"] = db_handler.get_user(1)
+
+    state = asyncio.run(add_google_sheet_key_command(update, context))
+
+    assert state == WAITING_FOR_SHEET_KEY
+    assert update.message.text == "Please send your Google Sheet key."
+    assert db_handler.get_googlesheet_key(1) is None
+
+    update_key = DummyUpdate(1)
+    update_key.message.text = "sheet456"
+    asyncio.run(receive_google_sheet_key(update_key, context))
+
+    assert db_handler.get_googlesheet_key(1) == "sheet456"
+    assert update_key.message.text == "Google Sheet key saved!"
+
+
+def test_add_google_sheet_key_command_requires_start(tmp_path, monkeypatch):
+    monkeypatch.setattr(db_handler, "db_connect", lambda: sqlite3.connect(tmp_path / "test.db"))
+    db_handler.table_init()
+
+    update = DummyUpdate(1)
+    context = DummyContext()
+
+    asyncio.run(add_google_sheet_key_command(update, context))
 
     assert update.message.text == "Please run /start first to initialize your account."
