@@ -9,8 +9,7 @@ from assistant.qr_reader import read_qr
 from assistant.parser import ReceiptParser
 from assistant.cleaner import remove_file, move_to_archive
 from assistant.exporter import append_voucher_data, append_item_data, reset_sheets, prepare_sheets, initialize_tables
-from assistant.db_handler import table_init, construct_user, get_user, User
-
+from assistant.db_handler import table_init, construct_user, add_googlesheet_key, get_user
 import json
 from assistant.getter import get_json_data
 from dotenv import load_dotenv
@@ -27,7 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Define states for ConversationHandler
-WAITING_FOR_IMAGE = 1
+WAITING_FOR_IMAGE, WAITING_FOR_SHEET_KEY = range(2)
 
 main_keyboard = ReplyKeyboardMarkup(
     [['/start']],
@@ -126,6 +125,27 @@ async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TY
         logger.error(f"Error during sheet preparation: {e}")
         await update.message.reply_text(f"An error occurred: {e}", reply_markup=main_keyboard)
 
+# Handler for the /add_google_sheet_key command
+async def add_google_sheet_key_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Prompt the user to provide a Google Sheet key."""
+    user = context.user_data.get("user")
+    if not user:
+        await update.message.reply_text("Please run /start first to initialize your account.")
+        return ConversationHandler.END
+
+    await update.message.reply_text("Please send your Google Sheet key.")
+    return WAITING_FOR_SHEET_KEY
+
+
+async def receive_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Store the Google Sheet key sent by the user."""
+    user = context.user_data.get("user")
+    key = update.message.text.strip()
+    add_googlesheet_key(user.user_id, key)
+    user.googlesheet_key = key
+    await update.message.reply_text("Google Sheet key saved!")
+    return ConversationHandler.END
+
 # Handler for the /sheet_key command
 async def sheet_key_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send the user's Google Sheet key back to them."""
@@ -164,6 +184,17 @@ def main():
     app.add_handler(CommandHandler("prepare_sheet", prepare_sheet_command))
     app.add_handler(CommandHandler("sheet_key", sheet_key_command))
     app.add_handler(conv_handler)
+    sheet_key_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("add_google_sheet_key", add_google_sheet_key_command)],
+        states={
+            WAITING_FOR_SHEET_KEY: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_google_sheet_key)
+            ],
+        },
+        fallbacks=[],
+    )
+    app.add_handler(sheet_key_conv_handler)
+
 
     logger.info("Bot is running. Press Ctrl+C to stop.")
     app.run_polling()
