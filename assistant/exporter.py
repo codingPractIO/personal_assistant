@@ -4,11 +4,9 @@ from google.oauth2.service_account import Credentials
 import logging
 from templates.table_creation_template import TABLE_CREATION_BODY
 from templates.sheets_preparation_template import SHEETS_PREPARATION_BODY
-from .config import GOOGLE_SHEET_KEY, SERVICE_ACCOUNT_FILE, SCOPES
+from .config import SERVICE_ACCOUNT_FILE, SCOPES
 
 logger = logging.getLogger(__name__)
-
-sheet_id = GOOGLE_SHEET_KEY
 
 _service = None
 
@@ -23,10 +21,8 @@ def get_service():
         _service = build("sheets", "v4", credentials=credentials)
     return _service
 
-def initialize_tables():
-    """
-    Initializes the Google Sheet by clearing existing data and setting up headers.
-    """
+def initialize_tables(sheet_id: str):
+    """Initialize a Google Sheet with headers."""
     service = get_service()
     sheet = service.spreadsheets()
     # Clear existing data
@@ -40,12 +36,8 @@ def initialize_tables():
     logger.info("Sheet initialized with headers.")
 
 
-def reset_sheets():
-    """
-    Resets the spreadsheet to its original state:
-    - Ensures only one sheet remains with sheetId 0.
-    - Clears all data from the remaining sheet and renames it to 'Sheet1'.
-    """
+def reset_sheets(sheet_id: str):
+    """Reset the spreadsheet to a single empty sheet."""
     service = get_service()
     sheet = service.spreadsheets()
     spreadsheet = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
@@ -101,12 +93,9 @@ def reset_sheets():
     logger.info("Spreadsheet reset: only one empty sheet with id 0 remains.")
 
 
-def prepare_sheets():
-    """
-    Creates a new sheet (tab) in the Google Spreadsheet.
-    :param sheet_name: Name of the new sheet/tab.
-    """
-    
+def prepare_sheets(sheet_id: str):
+    """Create a new sheet (tab) in the Google Spreadsheet."""
+
     service = get_service()
     response = service.spreadsheets().batchUpdate(
         spreadsheetId=sheet_id,
@@ -116,7 +105,7 @@ def prepare_sheets():
     return response
 
 
-def append_item_data(data):
+def append_item_data(sheet_id: str, data):
     body = {
         'values': data["items"]
     }
@@ -133,7 +122,7 @@ def append_item_data(data):
 
     logger.info("%s cells appended.", result.get('updates', {}).get('updatedCells', 0))
 
-def append_voucher_data(data):
+def append_voucher_data(sheet_id: str, data):
     body = {
         'values': data["voucher_data"]
     }

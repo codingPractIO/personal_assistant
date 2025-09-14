@@ -93,8 +93,14 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("No QR code found in the image, please try to send a clearer image.")
         return WAITING_FOR_IMAGE
     if parsed_json:
-        append_item_data(parsed_json)
-        append_voucher_data(parsed_json)
+        user = context.user_data.get("user")
+        if not user or not user.googlesheet_key:
+            await update.message.reply_text(
+                "No Google Sheet key found. Please set one using /add_google_sheet_key."
+            )
+            return ConversationHandler.END
+        append_item_data(user.googlesheet_key, parsed_json)
+        append_voucher_data(user.googlesheet_key, parsed_json)
 
         
         
@@ -116,11 +122,21 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Handler for the /prepare_sheets command
 async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Preparing sheets... Please wait.")
+    user = context.user_data.get("user")
+    if not user or not user.googlesheet_key:
+        await update.message.reply_text(
+            "No Google Sheet key found. Please set one using /add_google_sheet_key.",
+            reply_markup=main_keyboard,
+        )
+        return
     try:
-        reset_sheets()
-        prepare_sheets()
-        initialize_tables()
-        await update.message.reply_text("Sheets have been reset and initialized successfully!", reply_markup=main_keyboard)
+        reset_sheets(user.googlesheet_key)
+        prepare_sheets(user.googlesheet_key)
+        initialize_tables(user.googlesheet_key)
+        await update.message.reply_text(
+            "Sheets have been reset and initialized successfully!",
+            reply_markup=main_keyboard,
+        )
     except Exception as e:
         logger.error(f"Error during sheet preparation: {e}")
         await update.message.reply_text(f"An error occurred: {e}", reply_markup=main_keyboard)
