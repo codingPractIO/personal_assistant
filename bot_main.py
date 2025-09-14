@@ -101,6 +101,7 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return ConversationHandler.END
         append_item_data(user.googlesheet_key, parsed_json)
         append_voucher_data(user.googlesheet_key, parsed_json)
+        await update.message.reply_text("QR code processed and data appended to Google Sheets!")
 
         
         
@@ -153,7 +154,7 @@ async def add_google_sheet_key_command(update: Update, context: ContextTypes.DEF
     return WAITING_FOR_SHEET_KEY
 
 
-async def receive_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def store_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Store the Google Sheet key sent by the user."""
     user = context.user_data.get("user")
     key = update.message.text.strip()
@@ -204,7 +205,7 @@ def main():
         entry_points=[CommandHandler("add_google_sheet_key", add_google_sheet_key_command)],
         states={
             WAITING_FOR_SHEET_KEY: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_google_sheet_key)
+                MessageHandler(filters.TEXT & ~filters.COMMAND, store_google_sheet_key)
             ],
         },
         fallbacks=[],

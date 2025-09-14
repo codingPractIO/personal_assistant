@@ -26,10 +26,10 @@ def table_init():
     ''')
 
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS qr_codes (
+        CREATE TABLE IF NOT EXISTS processed_receipts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_telegram_id INTEGER,
-            qr_code TEXT,
+            receipt_number TEXT,       
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_telegram_id) REFERENCES users (user_telegram_id)
         )
