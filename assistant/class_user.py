@@ -9,5 +9,5 @@ class User:
     id: int
     user_id: int
     googlesheet_key: Optional[str]
-    is_owner: int
+    googlesheet_owner: int
     registered_at: str

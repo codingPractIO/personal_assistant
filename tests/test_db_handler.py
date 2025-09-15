@@ -26,6 +26,28 @@ def test_get_user_returns_dataclass_after_add(tmp_path, monkeypatch):
     assert user.user_id == 42
 
 
+def test_add_googlesheet_key_sets_owner_and_blocks_duplicates(tmp_path, monkeypatch):
+    monkeypatch.setattr(db_handler, "db_connect", lambda: _tmp_db(tmp_path))
+
+    db_handler.table_init()
+    db_handler.add_user(1)
+    db_handler.add_user(2)
+
+    key = db_handler.add_googlesheet_key(1, "sheet123")
+    assert key == "sheet123"
+
+    owner = db_handler.get_user(1)
+    assert owner.googlesheet_key == "sheet123"
+    assert owner.googlesheet_owner == 1
+
+    with pytest.raises(db_handler.GoogleSheetOwnershipError):
+        db_handler.add_googlesheet_key(2, "sheet123")
+
+    non_owner = db_handler.get_user(2)
+    assert non_owner.googlesheet_key is None
+    assert non_owner.googlesheet_owner == 0
+
+
 def test_processed_receipts_functions(tmp_path, monkeypatch):
     """Ensure processed receipts can be stored and retrieved per user."""
     monkeypatch.setattr(db_handler, "db_connect", lambda: _tmp_db(tmp_path))

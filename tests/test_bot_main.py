@@ -81,3 +81,24 @@ def test_store_google_sheet_key_extracts_key_from_link(tmp_path, monkeypatch):
 
     user = db_handler.get_user(1)
     assert user.googlesheet_key == "10s_m17fznodfg0uosbZ0LFbqX8zUxLlMkF__0oOsxpo"
+    assert user.googlesheet_owner == 1
+
+
+def test_store_google_sheet_key_rejects_duplicate_owned_key(tmp_path, monkeypatch):
+    monkeypatch.setattr(db_handler, "db_connect", lambda: sqlite3.connect(tmp_path / "test.db"))
+    db_handler.table_init()
+    db_handler.add_user(1)
+    db_handler.add_user(2)
+    db_handler.add_googlesheet_key(1, "sheet123")
+
+    update = DummyUpdate(2)
+    context = DummyContext()
+    context.user_data["user"] = db_handler.get_user(2)
+
+    update.message.text = "sheet123"
+    asyncio.run(store_google_sheet_key(update, context))
+
+    assert update.message.text == "That Google Sheet key is already owned by another user."
+    user = db_handler.get_user(2)
+    assert user.googlesheet_key is None
+    assert user.googlesheet_owner == 0

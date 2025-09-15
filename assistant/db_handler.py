@@ -6,6 +6,10 @@ from assistant.class_user import User
 from assistant.input_handler import extract_sheet_key
 
 
+class GoogleSheetOwnershipError(ValueError):
+    """Raised when a Google Sheet key is already owned by another user."""
+
+
 def db_connect():
     os.makedirs("db", exist_ok=True)
     conn = sqlite3.connect("db/bot.db")
@@ -45,7 +49,7 @@ def get_user(user_telegram_id: int) -> Optional[User]:
     conn = db_connect()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, user_telegram_id, googlesheet_key, is_owner, registered_at "
+        "SELECT id, user_telegram_id, googlesheet_key, googlesheet_owner, registered_at "
         "FROM users WHERE user_telegram_id = ?",
         (user_telegram_id,),
     )
@@ -74,17 +78,35 @@ def construct_user(user_telegram_id: int) -> Optional[User]:
     return get_user(user_telegram_id)
 
 def add_googlesheet_key(user_telegram_id: int, url: str) -> str:
-    """Update the googlesheet_key for a user, parsing it from a URL."""
+    """Update the googlesheet_key for a user, parsing it from a URL.
+
+    Raises:
+        GoogleSheetOwnershipError: If the provided key is already owned by
+            another user.
+    """
+
     key = extract_sheet_key(url) or url
     conn = db_connect()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET googlesheet_key = ? WHERE user_telegram_id = ?",
-        (key, user_telegram_id),
-    )
-    conn.commit()
-    conn.close()
-    return key
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT user_telegram_id FROM users WHERE googlesheet_key = ? AND googlesheet_owner = 1",
+            (key,),
+        )
+        owner_row = cursor.fetchone()
+        if owner_row and owner_row[0] != user_telegram_id:
+            raise GoogleSheetOwnershipError(
+                "That Google Sheet key is already owned by another user."
+            )
+
+        cursor.execute(
+            "UPDATE users SET googlesheet_key = ?, googlesheet_owner = 1 WHERE user_telegram_id = ?",
+            (key, user_telegram_id),
+        )
+        conn.commit()
+        return key
+    finally:
+        conn.close()
 
 def get_googlesheet_key(user_telegram_id: int) -> str | None:
     """Retrieve the googlesheet_key for a user from the users table."""

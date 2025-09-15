@@ -9,7 +9,13 @@ from assistant.qr_reader import read_qr
 from assistant.parser import ReceiptParser
 from assistant.cleaner import remove_file, move_to_archive
 from assistant.exporter import append_voucher_data, append_item_data, reset_sheets, prepare_sheets, initialize_tables
-from assistant.db_handler import table_init, construct_user, add_googlesheet_key, get_user
+from assistant.db_handler import (
+    table_init,
+    construct_user,
+    add_googlesheet_key,
+    get_user,
+    GoogleSheetOwnershipError,
+)
 import json
 from assistant.getter import get_json_data
 from dotenv import load_dotenv
@@ -160,9 +166,19 @@ async def add_google_sheet_key_command(update: Update, context: ContextTypes.DEF
 async def store_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Store the Google Sheet key sent by the user."""
     user = context.user_data.get("user")
+    if not user:
+        await update.message.reply_text("Please run /start first to initialize your account.")
+        return ConversationHandler.END
+
     raw_input = update.message.text.strip()
-    key = add_googlesheet_key(user.user_id, raw_input)
+    try:
+        key = add_googlesheet_key(user.user_id, raw_input)
+    except GoogleSheetOwnershipError as exc:
+        await update.message.reply_text(str(exc))
+        return ConversationHandler.END
+
     user.googlesheet_key = key
+    user.googlesheet_owner = 1
     await update.message.reply_text("Google Sheet key saved!")
     return ConversationHandler.END
 
