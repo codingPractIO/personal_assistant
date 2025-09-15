@@ -40,8 +40,10 @@ def test_add_googlesheet_key_sets_owner_and_blocks_duplicates(tmp_path, monkeypa
     assert owner.googlesheet_key == "sheet123"
     assert owner.googlesheet_owner == 1
 
-    with pytest.raises(db_handler.GoogleSheetOwnershipError):
+    with pytest.raises(db_handler.GoogleSheetOwnershipError) as excinfo:
         db_handler.add_googlesheet_key(2, "sheet123")
+
+    assert str(excinfo.value) == db_handler.GOOGLESHEET_KEY_IN_USE_MESSAGE
 
     non_owner = db_handler.get_user(2)
     assert non_owner.googlesheet_key is None

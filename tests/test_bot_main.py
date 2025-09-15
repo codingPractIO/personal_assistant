@@ -98,7 +98,7 @@ def test_store_google_sheet_key_rejects_duplicate_owned_key(tmp_path, monkeypatc
     update.message.text = "sheet123"
     asyncio.run(store_google_sheet_key(update, context))
 
-    assert update.message.text == "That Google Sheet key is already owned by another user."
+    assert update.message.text == db_handler.GOOGLESHEET_KEY_IN_USE_MESSAGE
     user = db_handler.get_user(2)
     assert user.googlesheet_key is None
     assert user.googlesheet_owner == 0
