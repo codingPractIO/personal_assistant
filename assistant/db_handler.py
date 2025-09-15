@@ -21,7 +21,7 @@ def table_init():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_telegram_id INTEGER UNIQUE,
             googlesheet_key TEXT,
-            is_owner INTEGER DEFAULT 0,
+            googlesheet_owner INTEGER DEFAULT 0,
             registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
