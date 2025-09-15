@@ -11,6 +11,10 @@ OWNERSHIP_MESSAGE = (
     "Please ask the current owner to release it or choose a different sheet."
 )
 
+JOIN_MESSAGE = (
+    "This Google Sheet key is not registered to any owner. Please ask the owner to add it first."
+)
+
 
 def _tmp_db(tmp_path):
     """Return a connection to a temporary database inside tmp_path."""
@@ -69,6 +73,42 @@ def test_add_googlesheet_key_creates_user_with_owner_flag(tmp_path, monkeypatch)
     assert created is not None
     assert created.googlesheet_key == "sheet99"
     assert created.googlesheet_owner == 1
+
+
+def test_join_googlesheet_key_adds_existing_key(tmp_path, monkeypatch):
+    monkeypatch.setattr(db_handler, "db_connect", lambda: _tmp_db(tmp_path))
+
+    db_handler.table_init()
+    db_handler.add_user(1)
+    db_handler.add_user(2)
+
+    db_handler.add_googlesheet_key(1, "sheet123")
+
+    joined = db_handler.join_googlesheet_key(2, "https://docs.google.com/spreadsheets/d/sheet123/edit")
+    assert joined == "sheet123"
+
+    owner = db_handler.get_user(1)
+    assert owner.googlesheet_owner == 1
+
+    joined_user = db_handler.get_user(2)
+    assert joined_user.googlesheet_key == "sheet123"
+    assert joined_user.googlesheet_owner == 0
+
+
+def test_join_googlesheet_key_requires_existing_owner(tmp_path, monkeypatch):
+    monkeypatch.setattr(db_handler, "db_connect", lambda: _tmp_db(tmp_path))
+
+    db_handler.table_init()
+    db_handler.add_user(2)
+
+    with pytest.raises(db_handler.GoogleSheetJoinError) as excinfo:
+        db_handler.join_googlesheet_key(2, "sheet123")
+
+    assert str(excinfo.value) == JOIN_MESSAGE
+
+    user = db_handler.get_user(2)
+    assert user.googlesheet_key is None
+    assert user.googlesheet_owner == 0
 
 
 def test_processed_receipts_functions(tmp_path, monkeypatch):

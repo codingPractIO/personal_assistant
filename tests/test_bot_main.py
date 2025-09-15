@@ -14,12 +14,16 @@ sys.modules.setdefault("pyzbar.pyzbar", types.SimpleNamespace(decode=lambda *arg
 sys.modules.setdefault("assistant.qr_reader", types.SimpleNamespace(read_qr=lambda *args, **kwargs: None))
 
 from assistant import db_handler
-from bot_main import sheet_key_command, store_google_sheet_key
+from bot_main import sheet_key_command, store_google_sheet_key, store_join_google_sheet_key
 
 
 OWNERSHIP_MESSAGE = (
     "This Google Sheet key is already linked to another account. "
     "Please ask the current owner to release it or choose a different sheet."
+)
+
+JOIN_MESSAGE = (
+    "This Google Sheet key is not registered to any owner. Please ask the owner to add it first."
 )
 
 
@@ -105,6 +109,44 @@ def test_store_google_sheet_key_rejects_duplicate_owned_key(tmp_path, monkeypatc
     asyncio.run(store_google_sheet_key(update, context))
 
     assert update.message.text == OWNERSHIP_MESSAGE
+    user = db_handler.get_user(2)
+    assert user.googlesheet_key is None
+    assert user.googlesheet_owner == 0
+
+
+def test_store_join_google_sheet_key_links_existing_sheet(tmp_path, monkeypatch):
+    monkeypatch.setattr(db_handler, "db_connect", lambda: sqlite3.connect(tmp_path / "test.db"))
+    db_handler.table_init()
+    db_handler.add_user(1)
+    db_handler.add_user(2)
+    db_handler.add_googlesheet_key(1, "sheet123")
+
+    update = DummyUpdate(2)
+    context = DummyContext()
+    context.user_data["user"] = db_handler.get_user(2)
+
+    update.message.text = "sheet123"
+    asyncio.run(store_join_google_sheet_key(update, context))
+
+    user = db_handler.get_user(2)
+    assert user.googlesheet_key == "sheet123"
+    assert user.googlesheet_owner == 0
+    assert update.message.text == "Joined Google Sheet successfully!"
+
+
+def test_store_join_google_sheet_key_requires_registered_owner(tmp_path, monkeypatch):
+    monkeypatch.setattr(db_handler, "db_connect", lambda: sqlite3.connect(tmp_path / "test.db"))
+    db_handler.table_init()
+    db_handler.add_user(2)
+
+    update = DummyUpdate(2)
+    context = DummyContext()
+    context.user_data["user"] = db_handler.get_user(2)
+
+    update.message.text = "sheet123"
+    asyncio.run(store_join_google_sheet_key(update, context))
+
+    assert update.message.text == JOIN_MESSAGE
     user = db_handler.get_user(2)
     assert user.googlesheet_key is None
     assert user.googlesheet_owner == 0
