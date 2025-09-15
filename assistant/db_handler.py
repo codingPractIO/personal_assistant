@@ -3,7 +3,7 @@ import sqlite3
 from typing import Optional
 
 from assistant.class_user import User
-from assistant.google_sheets import extract_sheet_key
+from assistant.input_handler import extract_sheet_key
 
 
 def db_connect():
@@ -73,9 +73,9 @@ def construct_user(user_telegram_id: int) -> Optional[User]:
     add_user(user_telegram_id)
     return get_user(user_telegram_id)
 
-def add_googlesheet_key(user_telegram_id: int, key_or_url: str) -> str:
-    """Update the googlesheet_key for a user, parsing it from a URL if needed."""
-    key = extract_sheet_key(key_or_url) or key_or_url
+def add_googlesheet_key(user_telegram_id: int, url: str) -> str:
+    """Update the googlesheet_key for a user, parsing it from a URL."""
+    key = extract_sheet_key(url) or url
     conn = db_connect()
     cursor = conn.cursor()
     cursor.execute(
