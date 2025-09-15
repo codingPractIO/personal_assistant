@@ -8,6 +8,10 @@ from assistant.input_handler import extract_sheet_key
 
 class GoogleSheetOwnershipError(ValueError):
     """Raised when a Google Sheet key is already owned by another user."""
+
+
+class GoogleSheetJoinError(ValueError):
+    """Raised when a user cannot join a Google Sheet."""
 def db_connect():
     os.makedirs("db", exist_ok=True)
     conn = sqlite3.connect("db/bot.db")
@@ -110,6 +114,58 @@ def add_googlesheet_key(user_telegram_id: int, url: str) -> str:
                 googlesheet_owner = 1
             """,
             (user_telegram_id, key),
+        )
+        conn.commit()
+        return key
+    finally:
+        conn.close()
+
+
+def join_googlesheet_key(user_telegram_id: int, url: str) -> str:
+    """Assign an existing Google Sheet key to a user who is joining a sheet.
+
+    The helper verifies that the sheet is already owned by someone before
+    linking it to the requesting user. Joined users are marked with
+    ``googlesheet_owner`` set to ``0`` unless they already own the sheet.
+
+    Raises:
+        GoogleSheetJoinError: If the sheet key is not registered to any owner.
+    """
+
+    key = extract_sheet_key(url) or url
+    conn = db_connect()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT user_telegram_id FROM users
+            WHERE googlesheet_key = ? AND googlesheet_owner = 1
+            """,
+            (key,),
+        )
+        owner_row = cursor.fetchone()
+        if not owner_row:
+            raise GoogleSheetJoinError(
+                "This Google Sheet key is not registered to any owner. "
+                "Please ask the owner to add it first."
+            )
+
+        cursor.execute(
+            "SELECT googlesheet_owner FROM users WHERE user_telegram_id = ?",
+            (user_telegram_id,),
+        )
+        user_row = cursor.fetchone()
+        owner_flag = 1 if user_row and user_row[0] == 1 else 0
+
+        cursor.execute(
+            """
+            INSERT INTO users (user_telegram_id, googlesheet_key, googlesheet_owner)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_telegram_id) DO UPDATE SET
+                googlesheet_key = excluded.googlesheet_key,
+                googlesheet_owner = excluded.googlesheet_owner
+            """,
+            (user_telegram_id, key, owner_flag),
         )
         conn.commit()
         return key

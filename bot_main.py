@@ -13,8 +13,10 @@ from assistant.db_handler import (
     table_init,
     construct_user,
     add_googlesheet_key,
+    join_googlesheet_key,
     get_user,
     GoogleSheetOwnershipError,
+    GoogleSheetJoinError,
 )
 import json
 from assistant.getter import get_json_data
@@ -32,7 +34,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Define states for ConversationHandler
-WAITING_FOR_IMAGE, WAITING_FOR_SHEET_KEY = range(2)
+WAITING_FOR_IMAGE, WAITING_FOR_SHEET_KEY, WAITING_FOR_JOIN_SHEET_KEY = range(3)
 
 main_keyboard = ReplyKeyboardMarkup(
     [['/start']],
@@ -185,6 +187,40 @@ async def store_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_T
     await update.message.reply_text("Google Sheet key saved!")
     return ConversationHandler.END
 
+
+async def join_google_sheet_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Prompt the user to provide a Google Sheet key to join."""
+    user = context.user_data.get("user")
+    if not user:
+        await update.message.reply_text("Please run /start first to initialize your account.")
+        return ConversationHandler.END
+
+    await update.message.reply_text("Please send a link to the Google Sheet you wish to join.")
+    return WAITING_FOR_JOIN_SHEET_KEY
+
+
+async def store_join_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Store a Google Sheet key for a user joining an existing sheet."""
+    user = context.user_data.get("user")
+    if not user:
+        await update.message.reply_text("Please run /start first to initialize your account.")
+        return ConversationHandler.END
+
+    raw_input = update.message.text.strip()
+    try:
+        key = join_googlesheet_key(user.user_id, raw_input)
+    except GoogleSheetJoinError:
+        await update.message.reply_text(
+            "This Google Sheet key is not registered to any owner. Please ask the owner to add it first."
+        )
+        return ConversationHandler.END
+
+    user.googlesheet_key = key
+    if user.googlesheet_owner != 1:
+        user.googlesheet_owner = 0
+    await update.message.reply_text("Joined Google Sheet successfully!")
+    return ConversationHandler.END
+
 # Handler for the /sheet_key command
 async def sheet_key_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send the user's Google Sheet key back to them."""
@@ -233,6 +269,17 @@ def main():
         fallbacks=[],
     )
     app.add_handler(sheet_key_conv_handler)
+
+    join_sheet_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("join_googlesheet", join_google_sheet_command)],
+        states={
+            WAITING_FOR_JOIN_SHEET_KEY: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, store_join_google_sheet_key)
+            ],
+        },
+        fallbacks=[],
+    )
+    app.add_handler(join_sheet_conv_handler)
 
 
     logger.info("Bot is running. Press Ctrl+C to stop.")
