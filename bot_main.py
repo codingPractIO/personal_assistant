@@ -153,15 +153,15 @@ async def add_google_sheet_key_command(update: Update, context: ContextTypes.DEF
         await update.message.reply_text("Please run /start first to initialize your account.")
         return ConversationHandler.END
 
-    await update.message.reply_text("Please send your Google Sheet key.")
+    await update.message.reply_text("Please send a link to your Google Sheet.")
     return WAITING_FOR_SHEET_KEY
 
 
 async def store_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Store the Google Sheet key sent by the user."""
     user = context.user_data.get("user")
-    key = update.message.text.strip()
-    add_googlesheet_key(user.user_id, key)
+    raw_input = update.message.text.strip()
+    key = add_googlesheet_key(user.user_id, raw_input)
     user.googlesheet_key = key
     await update.message.reply_text("Google Sheet key saved!")
     return ConversationHandler.END
