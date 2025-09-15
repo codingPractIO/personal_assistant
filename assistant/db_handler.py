@@ -8,8 +8,6 @@ from assistant.input_handler import extract_sheet_key
 
 class GoogleSheetOwnershipError(ValueError):
     """Raised when a Google Sheet key is already owned by another user."""
-
-
 def db_connect():
     os.makedirs("db", exist_ok=True)
     conn = sqlite3.connect("db/bot.db")
@@ -80,6 +78,9 @@ def construct_user(user_telegram_id: int) -> Optional[User]:
 def add_googlesheet_key(user_telegram_id: int, url: str) -> str:
     """Update the googlesheet_key for a user, parsing it from a URL.
 
+    The function also marks the requesting user as the sheet owner in the
+    database by setting ``googlesheet_owner`` to ``1``.
+
     Raises:
         GoogleSheetOwnershipError: If the provided key is already owned by
             another user.
@@ -96,12 +97,19 @@ def add_googlesheet_key(user_telegram_id: int, url: str) -> str:
         owner_row = cursor.fetchone()
         if owner_row and owner_row[0] != user_telegram_id:
             raise GoogleSheetOwnershipError(
-                "That Google Sheet key is already owned by another user."
+                "This Google Sheet key is already linked to another account. "
+                "Please ask the current owner to release it or choose a different sheet."
             )
 
         cursor.execute(
-            "UPDATE users SET googlesheet_key = ?, googlesheet_owner = 1 WHERE user_telegram_id = ?",
-            (key, user_telegram_id),
+            """
+            INSERT INTO users (user_telegram_id, googlesheet_key, googlesheet_owner)
+            VALUES (?, ?, 1)
+            ON CONFLICT(user_telegram_id) DO UPDATE SET
+                googlesheet_key = excluded.googlesheet_key,
+                googlesheet_owner = 1
+            """,
+            (user_telegram_id, key),
         )
         conn.commit()
         return key

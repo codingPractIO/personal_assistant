@@ -173,8 +173,11 @@ async def store_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_T
     raw_input = update.message.text.strip()
     try:
         key = add_googlesheet_key(user.user_id, raw_input)
-    except GoogleSheetOwnershipError as exc:
-        await update.message.reply_text(str(exc))
+    except GoogleSheetOwnershipError:
+        await update.message.reply_text(
+            "This Google Sheet key is already linked to another account. "
+            "Please ask the current owner to release it or choose a different sheet."
+        )
         return ConversationHandler.END
 
     user.googlesheet_key = key

@@ -6,6 +6,12 @@ import pytest
 from assistant import db_handler
 
 
+OWNERSHIP_MESSAGE = (
+    "This Google Sheet key is already linked to another account. "
+    "Please ask the current owner to release it or choose a different sheet."
+)
+
+
 def _tmp_db(tmp_path):
     """Return a connection to a temporary database inside tmp_path."""
     db_file = tmp_path / "test.db"
@@ -40,12 +46,29 @@ def test_add_googlesheet_key_sets_owner_and_blocks_duplicates(tmp_path, monkeypa
     assert owner.googlesheet_key == "sheet123"
     assert owner.googlesheet_owner == 1
 
-    with pytest.raises(db_handler.GoogleSheetOwnershipError):
+    with pytest.raises(db_handler.GoogleSheetOwnershipError) as excinfo:
         db_handler.add_googlesheet_key(2, "sheet123")
+
+    assert str(excinfo.value) == OWNERSHIP_MESSAGE
 
     non_owner = db_handler.get_user(2)
     assert non_owner.googlesheet_key is None
     assert non_owner.googlesheet_owner == 0
+
+
+def test_add_googlesheet_key_creates_user_with_owner_flag(tmp_path, monkeypatch):
+    monkeypatch.setattr(db_handler, "db_connect", lambda: _tmp_db(tmp_path))
+
+    db_handler.table_init()
+
+    # The helper should upsert the user and mark them as the sheet owner.
+    key = db_handler.add_googlesheet_key(99, "sheet99")
+    assert key == "sheet99"
+
+    created = db_handler.get_user(99)
+    assert created is not None
+    assert created.googlesheet_key == "sheet99"
+    assert created.googlesheet_owner == 1
 
 
 def test_processed_receipts_functions(tmp_path, monkeypatch):

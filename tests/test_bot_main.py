@@ -17,6 +17,12 @@ from assistant import db_handler
 from bot_main import sheet_key_command, store_google_sheet_key
 
 
+OWNERSHIP_MESSAGE = (
+    "This Google Sheet key is already linked to another account. "
+    "Please ask the current owner to release it or choose a different sheet."
+)
+
+
 class DummyMessage:
     def __init__(self):
         self.text = None
@@ -98,7 +104,7 @@ def test_store_google_sheet_key_rejects_duplicate_owned_key(tmp_path, monkeypatc
     update.message.text = "sheet123"
     asyncio.run(store_google_sheet_key(update, context))
 
-    assert update.message.text == "That Google Sheet key is already owned by another user."
+    assert update.message.text == OWNERSHIP_MESSAGE
     user = db_handler.get_user(2)
     assert user.googlesheet_key is None
     assert user.googlesheet_owner == 0
