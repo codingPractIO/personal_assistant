@@ -15,7 +15,6 @@ from assistant.db_handler import (
     add_googlesheet_key,
     get_user,
     GoogleSheetOwnershipError,
-    GOOGLESHEET_KEY_IN_USE_MESSAGE,
 )
 import json
 from assistant.getter import get_json_data
@@ -175,7 +174,10 @@ async def store_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_T
     try:
         key = add_googlesheet_key(user.user_id, raw_input)
     except GoogleSheetOwnershipError:
-        await update.message.reply_text(GOOGLESHEET_KEY_IN_USE_MESSAGE)
+        await update.message.reply_text(
+            "This Google Sheet key is already linked to another account. "
+            "Please ask the current owner to release it or choose a different sheet."
+        )
         return ConversationHandler.END
 
     user.googlesheet_key = key

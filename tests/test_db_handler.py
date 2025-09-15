@@ -6,6 +6,12 @@ import pytest
 from assistant import db_handler
 
 
+OWNERSHIP_MESSAGE = (
+    "This Google Sheet key is already linked to another account. "
+    "Please ask the current owner to release it or choose a different sheet."
+)
+
+
 def _tmp_db(tmp_path):
     """Return a connection to a temporary database inside tmp_path."""
     db_file = tmp_path / "test.db"
@@ -43,7 +49,7 @@ def test_add_googlesheet_key_sets_owner_and_blocks_duplicates(tmp_path, monkeypa
     with pytest.raises(db_handler.GoogleSheetOwnershipError) as excinfo:
         db_handler.add_googlesheet_key(2, "sheet123")
 
-    assert str(excinfo.value) == db_handler.GOOGLESHEET_KEY_IN_USE_MESSAGE
+    assert str(excinfo.value) == OWNERSHIP_MESSAGE
 
     non_owner = db_handler.get_user(2)
     assert non_owner.googlesheet_key is None

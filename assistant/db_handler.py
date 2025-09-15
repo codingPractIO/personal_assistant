@@ -8,14 +8,6 @@ from assistant.input_handler import extract_sheet_key
 
 class GoogleSheetOwnershipError(ValueError):
     """Raised when a Google Sheet key is already owned by another user."""
-
-
-GOOGLESHEET_KEY_IN_USE_MESSAGE = (
-    "This Google Sheet key is already linked to another account. "
-    "Please ask the current owner to release it or choose a different sheet."
-)
-
-
 def db_connect():
     os.makedirs("db", exist_ok=True)
     conn = sqlite3.connect("db/bot.db")
@@ -104,7 +96,10 @@ def add_googlesheet_key(user_telegram_id: int, url: str) -> str:
         )
         owner_row = cursor.fetchone()
         if owner_row and owner_row[0] != user_telegram_id:
-            raise GoogleSheetOwnershipError(GOOGLESHEET_KEY_IN_USE_MESSAGE)
+            raise GoogleSheetOwnershipError(
+                "This Google Sheet key is already linked to another account. "
+                "Please ask the current owner to release it or choose a different sheet."
+            )
 
         cursor.execute(
             """
