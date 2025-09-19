@@ -36,15 +36,24 @@ logger = logging.getLogger(__name__)
 # Define states for ConversationHandler
 WAITING_FOR_IMAGE, WAITING_FOR_SHEET_KEY, WAITING_FOR_JOIN_SHEET_KEY = range(3)
 
-main_keyboard = ReplyKeyboardMarkup(
-    [['/start']],
-    resize_keyboard=True,
-    one_time_keyboard=False  # Persistent keyboard
-)
+def build_main_keyboard(user=None):
+    """Return the appropriate keyboard for the user state."""
+    buttons = ['/start']
+    if user:
+        if user.googlesheet_key:
+            buttons.append('/scan_qrcode')
+        else:
+            buttons.extend(['/add_googlesheet', '/join_googlesheet'])
+
+    return ReplyKeyboardMarkup(
+        [buttons],
+        resize_keyboard=True,
+        one_time_keyboard=False,  # Persistent keyboard
+    )
 
 
 qr_keyboard = ReplyKeyboardMarkup(
-    [['/cancel', '/scan_qr']],
+    [['/cancel', '/scan_qrcode']],
     resize_keyboard=True,
     one_time_keyboard=False  # Persistent keyboard
 )
@@ -56,17 +65,12 @@ async def hello_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Handler for the /start command, which shows the menu
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = ReplyKeyboardMarkup(
-        [['/scan_qr']],  # Added /scan_qr to menu
-        resize_keyboard=True,
-        one_time_keyboard=True
-    )
     user = construct_user(update.effective_user.id)
     if user:
         context.user_data["user"] = user
     await update.message.reply_text(
         "Welcome! Press a button below or type a command.",
-        reply_markup=keyboard
+        reply_markup=build_main_keyboard(user)
     )
 
 # Start the scan_qr conversation
@@ -107,7 +111,7 @@ async def qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if parsed_json:
         if not user or not user.googlesheet_key:
             await update.message.reply_text(
-                "No Google Sheet key found. Please set one using /add_google_sheet_key.",
+                "No Google Sheet key found. Please set one using /add_googlesheet.",
             )
             return ConversationHandler.END
         append_item_data(user.googlesheet_key, parsed_json)
@@ -128,7 +132,7 @@ async def non_qrcode_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 # Handle /cancel command
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("QR code upload cancelled.",
-                                    reply_markup=main_keyboard)
+                                    reply_markup=build_main_keyboard(context.user_data.get("user")))
     return ConversationHandler.END
 
 # Handler for the /prepare_sheets command
@@ -137,8 +141,8 @@ async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TY
     user = context.user_data.get("user")
     if not user or not user.googlesheet_key:
         await update.message.reply_text(
-            "No Google Sheet key found. Please set one using /add_google_sheet_key.",
-            reply_markup=main_keyboard,
+            "No Google Sheet key found. Please set one using /add_googlesheet.",
+            reply_markup=build_main_keyboard(user),
         )
         return
     try:
@@ -147,13 +151,16 @@ async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TY
         initialize_tables(user.googlesheet_key)
         await update.message.reply_text(
             "Sheets have been reset and initialized successfully!",
-            reply_markup=main_keyboard,
+            reply_markup=build_main_keyboard(user),
         )
     except Exception as e:
         logger.error(f"Error during sheet preparation: {e}")
-        await update.message.reply_text(f"An error occurred: {e}", reply_markup=main_keyboard)
+        await update.message.reply_text(
+            f"An error occurred: {e}",
+            reply_markup=build_main_keyboard(user),
+        )
 
-# Handler for the /add_google_sheet_key command
+# Handler for the /add_googlesheet command
 async def add_google_sheet_key_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Prompt the user to provide a Google Sheet key."""
     user = context.user_data.get("user")
@@ -184,7 +191,10 @@ async def store_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_T
 
     user.googlesheet_key = key
     user.googlesheet_owner = 1
-    await update.message.reply_text("Google Sheet key saved!")
+    await update.message.reply_text(
+        "Google Sheet key saved!",
+        reply_markup=build_main_keyboard(user),
+    )
     return ConversationHandler.END
 
 
@@ -218,7 +228,10 @@ async def store_join_google_sheet_key(update: Update, context: ContextTypes.DEFA
     user.googlesheet_key = key
     if user.googlesheet_owner != 1:
         user.googlesheet_owner = 0
-    await update.message.reply_text("Joined Google Sheet successfully!")
+    await update.message.reply_text(
+        "Joined Google Sheet successfully!",
+        reply_markup=build_main_keyboard(user),
+    )
     return ConversationHandler.END
 
 # Handler for the /sheet_key command
@@ -241,9 +254,9 @@ def main():
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Conversation handler for /scan_qr
+    # Conversation handler for /scan_qrcode
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("scan_qr", scan_qr_command)],
+        entry_points=[CommandHandler(["scan_qr", "scan_qrcode"], scan_qr_command)],
         states={
             WAITING_FOR_IMAGE: [
                 MessageHandler(filters.PHOTO, qrcode_handler),
@@ -260,7 +273,7 @@ def main():
     app.add_handler(CommandHandler("sheet_key", sheet_key_command))
     app.add_handler(conv_handler)
     sheet_key_conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("add_google_sheet_key", add_google_sheet_key_command)],
+        entry_points=[CommandHandler(["add_google_sheet_key", "add_googlesheet"], add_google_sheet_key_command)],
         states={
             WAITING_FOR_SHEET_KEY: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, store_google_sheet_key)
