@@ -43,13 +43,6 @@ def table_init():
         )
     ''')
 
-    # Backfill the googlesheet_key column for existing installations that may
-    # predate the schema change.
-    cursor.execute("PRAGMA table_info(processed_receipts)")
-    processed_receipt_columns = {row[1] for row in cursor.fetchall()}
-    if "googlesheet_key" not in processed_receipt_columns:
-        cursor.execute("ALTER TABLE processed_receipts ADD COLUMN googlesheet_key TEXT")
-
     conn.commit()
     conn.close()
 
