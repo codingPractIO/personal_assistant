@@ -14,6 +14,7 @@ sys.modules.setdefault("pyzbar.pyzbar", types.SimpleNamespace(decode=lambda *arg
 sys.modules.setdefault("assistant.qr_reader", types.SimpleNamespace(read_qr=lambda *args, **kwargs: None))
 
 from assistant import db_handler
+import bot_main
 from bot_main import sheet_key_command, store_google_sheet_key, store_join_google_sheet_key
 
 
@@ -92,6 +93,7 @@ def test_store_google_sheet_key_extracts_key_from_link(tmp_path, monkeypatch):
     user = db_handler.get_user(1)
     assert user.googlesheet_key == "10s_m17fznodfg0uosbZ0LFbqX8zUxLlMkF__0oOsxpo"
     assert user.googlesheet_owner == 1
+    assert update.message.text == "Google Sheet key saved and sheets prepared!"
 
 
 def test_store_google_sheet_key_rejects_duplicate_owned_key(tmp_path, monkeypatch):
@@ -150,3 +152,12 @@ def test_store_join_google_sheet_key_requires_registered_owner(tmp_path, monkeyp
     user = db_handler.get_user(2)
     assert user.googlesheet_key is None
     assert user.googlesheet_owner == 0
+@pytest.fixture(autouse=True)
+def mock_sheet_preparation(monkeypatch):
+    """Prevent external API calls during sheet preparation."""
+
+    monkeypatch.setattr("bot_main.reset_sheets", lambda *args, **kwargs: None)
+    monkeypatch.setattr("bot_main.prepare_sheets", lambda *args, **kwargs: None)
+    monkeypatch.setattr("bot_main.initialize_tables", lambda *args, **kwargs: None)
+    monkeypatch.setattr("bot_main.initialize_graphs", lambda *args, **kwargs: None)
+

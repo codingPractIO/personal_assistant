@@ -8,7 +8,14 @@ from telegram.ext import (
 from assistant.qr_reader import read_qr
 from assistant.parser import ReceiptParser
 from assistant.cleaner import remove_file, move_to_archive
-from assistant.exporter import append_voucher_data, append_item_data, reset_sheets, prepare_sheets, initialize_tables
+from assistant.exporter import (
+    append_voucher_data,
+    append_item_data,
+    reset_sheets,
+    prepare_sheets,
+    initialize_tables,
+    initialize_graphs,
+)
 from assistant.db_handler import (
     table_init,
     construct_user,
@@ -149,6 +156,7 @@ async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TY
         reset_sheets(user.googlesheet_key)
         prepare_sheets(user.googlesheet_key)
         initialize_tables(user.googlesheet_key)
+        initialize_graphs(user.googlesheet_key)
         await update.message.reply_text(
             "Sheets have been reset and initialized successfully!",
             reply_markup=build_main_keyboard(user),
@@ -191,8 +199,23 @@ async def store_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_T
 
     user.googlesheet_key = key
     user.googlesheet_owner = 1
+
+    try:
+        reset_sheets(key)
+        prepare_sheets(key)
+        initialize_tables(key)
+        initialize_graphs(key)
+    except Exception as e:
+        logger.error(f"Error during sheet initialization: {e}")
+        await update.message.reply_text(
+            "Google Sheet key saved, but there was an error preparing the sheet."
+            f" Please try again later or use /prepare_sheets.\nError: {e}",
+            reply_markup=build_main_keyboard(user),
+        )
+        return ConversationHandler.END
+
     await update.message.reply_text(
-        "Google Sheet key saved!",
+        "Google Sheet key saved and sheets prepared!",
         reply_markup=build_main_keyboard(user),
     )
     return ConversationHandler.END
