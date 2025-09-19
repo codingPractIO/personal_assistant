@@ -3,41 +3,52 @@
 GRAPH_CREATION_BODY = {
     "requests": [
         {
-            "addPivotTable": {
-                "pivotTable": {
-                    "source": {
-                        "sheetId": 1,
-                        "startRowIndex": 1,
-                        "startColumnIndex": 0,
-                        "endColumnIndex": 8,
-                    },
-                    "rows": [
-                        {
-                            "sourceColumnOffset": 0,
-                            "sortOrder": "DESCENDING",
-                            "showTotals": False,
-                        }
-                    ],
-                    "values": [
-                        {
-                            "summarizeFunction": "SUM",
-                            "sourceColumnOffset": 3,
-                            "name": "Total Spend",
-                        }
-                    ],
-                    "valueLayout": "HORIZONTAL",
-                    "sortSpecs": [
-                        {
-                            "measureOffset": 0,
-                            "sortOrder": "DESCENDING",
-                        }
-                    ],
-                },
-                "destination": {
+            "updateCells": {
+                "start": {
                     "sheetId": 0,
-                    "startRowIndex": 0,
-                    "startColumnIndex": 0,
+                    "rowIndex": 0,
+                    "columnIndex": 0,
                 },
+                "rows": [
+                    {
+                        "values": [
+                            {
+                                "pivotTable": {
+                                    "source": {
+                                        "sheetId": 1,
+                                        "startRowIndex": 1,
+                                        "startColumnIndex": 0,
+                                        "endColumnIndex": 8,
+                                    },
+                                    "rows": [
+                                        {
+                                            "sourceColumnOffset": 0,
+                                            "sortOrder": "DESCENDING",
+                                            "showTotals": False,
+                                            "valueBucket": {
+                                                "values": [
+                                                    {
+                                                        "summarizeFunction": "SUM",
+                                                        "sourceColumnOffset": 3,
+                                                    }
+                                                ]
+                                            },
+                                        }
+                                    ],
+                                    "values": [
+                                        {
+                                            "summarizeFunction": "SUM",
+                                            "sourceColumnOffset": 3,
+                                            "name": "Total Spend",
+                                        }
+                                    ],
+                                    "valueLayout": "HORIZONTAL",
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "fields": "pivotTable",
             }
         },
         {
@@ -104,33 +115,42 @@ GRAPH_CREATION_BODY = {
             }
         },
         {
-            "addPivotTable": {
-                "pivotTable": {
-                    "source": {
-                        "sheetId": 1,
-                        "startRowIndex": 1,
-                        "startColumnIndex": 0,
-                        "endColumnIndex": 8,
-                    },
-                    "rows": [
-                        {
-                            "sourceColumnOffset": 5,
-                            "showTotals": False,
-                        }
-                    ],
-                    "values": [
-                        {
-                            "summarizeFunction": "SUM",
-                            "sourceColumnOffset": 3,
-                            "name": "Total Spend",
-                        }
-                    ],
-                },
-                "destination": {
+            "updateCells": {
+                "start": {
                     "sheetId": 0,
-                    "startRowIndex": 0,
-                    "startColumnIndex": 12,
+                    "rowIndex": 0,
+                    "columnIndex": 12,
                 },
+                "rows": [
+                    {
+                        "values": [
+                            {
+                                "pivotTable": {
+                                    "source": {
+                                        "sheetId": 1,
+                                        "startRowIndex": 1,
+                                        "startColumnIndex": 0,
+                                        "endColumnIndex": 8,
+                                    },
+                                    "rows": [
+                                        {
+                                            "sourceColumnOffset": 5,
+                                            "showTotals": False,
+                                        }
+                                    ],
+                                    "values": [
+                                        {
+                                            "summarizeFunction": "SUM",
+                                            "sourceColumnOffset": 3,
+                                            "name": "Total Spend",
+                                        }
+                                    ],
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "fields": "pivotTable",
             }
         },
         {
@@ -183,52 +203,61 @@ GRAPH_CREATION_BODY = {
             }
         },
         {
-            "addPivotTable": {
-                "pivotTable": {
-                    "source": {
-                        "sheetId": 1,
-                        "startRowIndex": 1,
-                        "startColumnIndex": 0,
-                        "endColumnIndex": 8,
-                    },
-                    "rows": [
-                        {
-                            "sourceColumnOffset": 6,
-                            "showTotals": False,
-                            "sortOrder": "ASCENDING",
-                            "groupRule": {
-                                "dateTimeRule": {
-                                    "type": "YEAR_MONTH",
-                                }
-                            },
-                        }
-                    ],
-                    "values": [
-                        {
-                            "summarizeFunction": "SUM",
-                            "sourceColumnOffset": 3,
-                            "name": "Total Spend",
-                        }
-                    ],
-                    "filterSpecifications": [
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "DATE_AFTER_RELATIVE",
+            "updateCells": {
+                "start": {
+                    "sheetId": 0,
+                    "rowIndex": 20,
+                    "columnIndex": 0,
+                },
+                "rows": [
+                    {
+                        "values": [
+                            {
+                                "pivotTable": {
+                                    "source": {
+                                        "sheetId": 1,
+                                        "startRowIndex": 1,
+                                        "startColumnIndex": 0,
+                                        "endColumnIndex": 8,
+                                    },
+                                    "rows": [
+                                        {
+                                            "sourceColumnOffset": 6,
+                                            "showTotals": False,
+                                            "sortOrder": "ASCENDING",
+                                            "groupRule": {
+                                                "dateTimeRule": {
+                                                    "type": "YEAR_MONTH",
+                                                }
+                                            },
+                                        }
+                                    ],
                                     "values": [
-                                        {"relativeDate": "PAST_SIX_MONTHS"}
+                                        {
+                                            "summarizeFunction": "SUM",
+                                            "sourceColumnOffset": 3,
+                                            "name": "Total Spend",
+                                        }
+                                    ],
+                                    "filterSpecifications": [
+                                        {
+                                            "filterCriteria": {
+                                                "condition": {
+                                                    "type": "DATE_AFTER_RELATIVE",
+                                                    "values": [
+                                                        {"relativeDate": "PAST_SIX_MONTHS"}
+                                                    ],
+                                                }
+                                            },
+                                            "sourceColumnOffset": 6,
+                                        }
                                     ],
                                 }
-                            },
-                            "sourceColumnOffset": 6,
-                        }
-                    ],
-                },
-                "destination": {
-                    "sheetId": 0,
-                    "startRowIndex": 20,
-                    "startColumnIndex": 0,
-                },
+                            }
+                        ]
+                    }
+                ],
+                "fields": "pivotTable",
             }
         },
         {

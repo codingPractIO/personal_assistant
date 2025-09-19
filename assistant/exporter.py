@@ -4,7 +4,7 @@ from google.oauth2.service_account import Credentials
 import logging
 from templates.table_creation_template import TABLE_CREATION_BODY
 from templates.sheets_preparation_template import SHEETS_PREPARATION_BODY
-from templates.graph_creation_template import GRAPH_CREATION_BODY
+#from templates.graph_creation_template import GRAPH_CREATION_BODY
 from .config import SERVICE_ACCOUNT_FILE, SCOPES
 
 logger = logging.getLogger(__name__)
@@ -106,16 +106,16 @@ def prepare_sheets(sheet_id: str):
     return response
 
 
-def initialize_graphs(sheet_id: str):
-    """Create pivot tables and charts for analytics."""
+# def initialize_graphs(sheet_id: str):
+#     """Create pivot tables and charts for analytics."""
 
-    service = get_service()
-    service.spreadsheets().batchUpdate(
-        spreadsheetId=sheet_id,
-        body=GRAPH_CREATION_BODY,
-    ).execute()
+#     service = get_service()
+#     service.spreadsheets().batchUpdate(
+#         spreadsheetId=sheet_id,
+#         body=GRAPH_CREATION_BODY,
+#     ).execute()
 
-    logger.info("Graphs initialized.")
+#     logger.info("Graphs initialized.")
 
 
 def append_item_data(sheet_id: str, data):

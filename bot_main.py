@@ -14,7 +14,6 @@ from assistant.exporter import (
     reset_sheets,
     prepare_sheets,
     initialize_tables,
-    initialize_graphs,
 )
 from assistant.db_handler import (
     table_init,
@@ -156,7 +155,7 @@ async def prepare_sheet_command(update: Update, context: ContextTypes.DEFAULT_TY
         reset_sheets(user.googlesheet_key)
         prepare_sheets(user.googlesheet_key)
         initialize_tables(user.googlesheet_key)
-        initialize_graphs(user.googlesheet_key)
+        # initialize_graphs(user.googlesheet_key) // her razberi etot syntax
         await update.message.reply_text(
             "Sheets have been reset and initialized successfully!",
             reply_markup=build_main_keyboard(user),
@@ -204,7 +203,7 @@ async def store_google_sheet_key(update: Update, context: ContextTypes.DEFAULT_T
         reset_sheets(key)
         prepare_sheets(key)
         initialize_tables(key)
-        initialize_graphs(key)
+        #initialize_graphs(key)
     except Exception as e:
         logger.error(f"Error during sheet initialization: {e}")
         await update.message.reply_text(
