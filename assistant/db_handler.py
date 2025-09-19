@@ -36,11 +36,19 @@ def table_init():
         CREATE TABLE IF NOT EXISTS processed_receipts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_telegram_id INTEGER,
-            receipt_number TEXT,       
+            googlesheet_key TEXT,
+            receipt_number TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_telegram_id) REFERENCES users (user_telegram_id)
         )
     ''')
+
+    # Backfill the googlesheet_key column for existing installations that may
+    # predate the schema change.
+    cursor.execute("PRAGMA table_info(processed_receipts)")
+    processed_receipt_columns = {row[1] for row in cursor.fetchall()}
+    if "googlesheet_key" not in processed_receipt_columns:
+        cursor.execute("ALTER TABLE processed_receipts ADD COLUMN googlesheet_key TEXT")
 
     conn.commit()
     conn.close()
@@ -188,24 +196,36 @@ def get_googlesheet_key(user_telegram_id: int) -> str | None:
 
 
 def add_processed_receipt(user_telegram_id: int, receipt_number: str) -> None:
-    """Store a processed receipt number for the given user."""
+    """Store a processed receipt number for the given user and sheet."""
     conn = db_connect()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO processed_receipts (user_telegram_id, receipt_number) VALUES (?, ?)",
-        (user_telegram_id, receipt_number),
+        "SELECT googlesheet_key FROM users WHERE user_telegram_id = ?",
+        (user_telegram_id,),
+    )
+    row = cursor.fetchone()
+    googlesheet_key = row[0] if row else None
+    cursor.execute(
+        """
+        INSERT INTO processed_receipts (user_telegram_id, googlesheet_key, receipt_number)
+        VALUES (?, ?, ?)
+        """,
+        (user_telegram_id, googlesheet_key, receipt_number),
     )
     conn.commit()
     conn.close()
 
 
-def get_processed_receipts(user_telegram_id: int) -> set[str]:
-    """Retrieve all processed receipt numbers for a given user."""
+def get_processed_receipts(googlesheet_key: str | None) -> set[str]:
+    """Retrieve all processed receipt numbers for a given Google Sheet."""
+    if not googlesheet_key:
+        return set()
+
     conn = db_connect()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT receipt_number FROM processed_receipts WHERE user_telegram_id = ?",
-        (user_telegram_id,),
+        "SELECT receipt_number FROM processed_receipts WHERE googlesheet_key = ?",
+        (googlesheet_key,),
     )
     receipts = {row[0] for row in cursor.fetchall()}
     conn.close()

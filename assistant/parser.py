@@ -5,7 +5,11 @@ import logging
 import re
 from typing import Any
 
-from assistant.db_handler import add_processed_receipt, get_processed_receipts
+from assistant.db_handler import (
+    add_processed_receipt,
+    get_googlesheet_key,
+    get_processed_receipts,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +62,14 @@ class ReceiptParser:
 
     def _check_if_tax_id_new(self) -> bool:
         """Check if the current invoice number has already been processed."""
-        if self.user_telegram_id is None or self.invoice_number is None:
+        if self.invoice_number is None:
             return True
-        processed = get_processed_receipts(self.user_telegram_id)
+
+        googlesheet_key = None
+        if self.user_telegram_id is not None:
+            googlesheet_key = get_googlesheet_key(self.user_telegram_id)
+
+        processed = get_processed_receipts(googlesheet_key)
         return str(self.invoice_number) not in processed
             
 

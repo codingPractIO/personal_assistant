@@ -117,11 +117,22 @@ def test_processed_receipts_functions(tmp_path, monkeypatch):
 
     db_handler.table_init()
     db_handler.add_user(1)
+    db_handler.add_googlesheet_key(1, "sheet123")
     db_handler.add_processed_receipt(1, "123")
     db_handler.add_processed_receipt(1, "456")
 
-    receipts = db_handler.get_processed_receipts(1)
+    receipts = db_handler.get_processed_receipts("sheet123")
     assert receipts == {"123", "456"}
 
-    db_handler.add_user(2)
-    assert db_handler.get_processed_receipts(2) == set()
+    # ensure the googlesheet_key column is populated alongside the telegram id
+    conn = db_handler.db_connect()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT DISTINCT googlesheet_key FROM processed_receipts WHERE user_telegram_id = ?",
+        (1,),
+    )
+    stored_keys = {row[0] for row in cursor.fetchall()}
+    conn.close()
+    assert stored_keys == {"sheet123"}
+
+    assert db_handler.get_processed_receipts("missing-key") == set()
