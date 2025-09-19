@@ -42,6 +42,11 @@ logger = logging.getLogger(__name__)
 # Define states for ConversationHandler
 WAITING_FOR_IMAGE, WAITING_FOR_SHEET_KEY, WAITING_FOR_JOIN_SHEET_KEY = range(3)
 
+
+def initialize_graphs(*args, **kwargs):
+    """Placeholder hook for initializing dashboard graphs."""
+    return None
+
 def build_main_keyboard(user=None):
     """Return the appropriate keyboard for the user state."""
     buttons = ['/start']
