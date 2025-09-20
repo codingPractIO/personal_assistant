@@ -175,11 +175,12 @@ async def add_google_sheet_key_command(update: Update, context: ContextTypes.DEF
         await update.message.reply_text("Please run /start first to initialize your account.")
         return ConversationHandler.END
 
-    await update.message.reply_text("Please do the following:"
-                                    "1. Create a new Google Sheet"
-                                    "2. Share it with personal-assistant@sheetsapi-460823.iam.gserviceaccount.com email. Make sure to provide Editor access."
-                                    "3. Send the full link to the Google Sheet."
-                                    "Waiting for your Google Sheet link...")
+    await update.message.reply_text("Please do the following:\n"
+                                    "1. Create a new Google Sheet\n"
+                                    "2. Share it with:\n personal-assistant@sheetsapi-460823.iam.gserviceaccount.com\n Make sure to provide Editor access.\n"
+                                    "3. Send the full link to the Google Sheet.\n"
+                                    "Waiting for your Google Sheet link..."
+                                    )
     return WAITING_FOR_SHEET_KEY
 
 
