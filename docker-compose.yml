@@ -7,4 +7,5 @@ services:
     volumes:
       - ./google_service.json:/app/google_service.json   # mount config.json
       - ./archive:/app/archive           # persist archive data
+      - ./db:/app/db          # persist the SQLite database
     restart: unless-stopped              # optional: auto-restart
