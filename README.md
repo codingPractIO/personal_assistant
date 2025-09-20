@@ -4,6 +4,6 @@ Bot to read serbian QR codes and store then in googlesheet
 
 - [x] Remove disc IO between assistants
 
-- [ ] Rewrite exporter as class, to allow objects with per user sheets IDs
+- [x] Rewrite exporter as class, to allow objects with per user sheets IDs
 
-- [ ] Move processed QR code tracking to DB
+- [x] Move processed QR code tracking to DB
